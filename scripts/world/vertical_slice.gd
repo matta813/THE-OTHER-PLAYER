@@ -4,7 +4,7 @@ extends Node3D
 @onready var prompt: Label = $UI/Prompt
 @onready var message: Label = $UI/TerminalPanel/TerminalText
 @onready var terminal_panel: Panel = $UI/TerminalPanel
-@onready var debug: Label = $UI/DebugPanel/Debug
+@onready var debug: Label = $UI/DebugPanel/Scroll/Debug
 var terminal_visits := 0; var room_b_entered := false; var delayed_logged := false; var corridor_entered := false; var typing_tween: Tween
 
 func _ready() -> void:

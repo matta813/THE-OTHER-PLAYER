@@ -47,6 +47,26 @@ albedo_color=Color(0.18,0.08,0.01,1)
 emission_enabled=true
 emission=Color(1,0.25,0.03,1)
 emission_energy_multiplier=2.0
+[sub_resource type="StyleBoxFlat" id="TerminalPanelStyle"]
+bg_color=Color(0.012,0.027,0.024,0.94)
+border_width_left=2
+border_width_top=2
+border_width_right=2
+border_width_bottom=2
+border_color=Color(0.09,0.45,0.32,0.8)
+corner_radius_top_left=3
+corner_radius_top_right=3
+corner_radius_bottom_right=3
+corner_radius_bottom_left=3
+[sub_resource type="StyleBoxFlat" id="DebugPanelStyle"]
+bg_color=Color(0.008,0.018,0.016,0.91)
+border_width_left=1
+border_width_top=1
+border_width_right=1
+border_width_bottom=1
+border_color=Color(0.08,0.25,0.18,0.8)
+[sub_resource type="SystemFont" id="TerminalFont"]
+font_names=PackedStringArray("Monospace")
 
 [node name="VerticalSlice" type="Node3D"]
 script=ExtResource("1")
@@ -215,9 +235,11 @@ target_position=Vector3(0,0,-3)
 collision_mask=2
 [node name="UI" type="CanvasLayer" parent="."]
 [node name="Prompt" type="Label" parent="UI"]
-anchors_preset=12
+anchors_preset=10
+anchor_top=1.0
 anchor_right=1.0
 anchor_bottom=1.0
+offset_top=-72.0
 offset_bottom=-45.0
 horizontal_alignment=1
 theme_override_colors/font_color=Color(0.76,0.82,0.78,0.9)
@@ -230,11 +252,13 @@ horizontal_alignment=1
 theme_override_colors/font_color=Color(0.48,0.82,0.7,1)
 theme_override_font_sizes/font_size=18
 [node name="TerminalPanel" type="Panel" parent="UI"]
-offset_left=820.0
+anchor_left=1.0
+anchor_right=1.0
+offset_left=-460.0
 offset_top=90.0
-offset_right=1240.0
+offset_right=-24.0
 offset_bottom=340.0
-modulate=Color(0.7,0.95,0.85,0.94)
+theme_override_styles/panel=SubResource("TerminalPanelStyle")
 [node name="TerminalText" type="Label" parent="UI/TerminalPanel"]
 offset_left=22.0
 offset_top=18.0
@@ -242,19 +266,27 @@ offset_right=400.0
 offset_bottom=232.0
 theme_override_colors/font_color=Color(0.14,0.9,0.58,1)
 theme_override_font_sizes/font_size=16
+theme_override_fonts/font=SubResource("TerminalFont")
 [node name="DebugPanel" type="Panel" parent="UI"]
 offset_left=14.0
 offset_top=14.0
 offset_right=520.0
-offset_bottom=700.0
-modulate=Color(0.04,0.06,0.055,0.9)
-[node name="Debug" type="Label" parent="UI/DebugPanel"]
+anchor_bottom=1.0
+offset_bottom=-16.0
+theme_override_styles/panel=SubResource("DebugPanelStyle")
+[node name="Scroll" type="ScrollContainer" parent="UI/DebugPanel"]
+anchor_right=1.0
+anchor_bottom=1.0
 offset_left=14.0
 offset_top=12.0
-offset_right=490.0
-offset_bottom=670.0
+offset_right=-14.0
+offset_bottom=-12.0
+horizontal_scroll_mode=0
+[node name="Debug" type="Label" parent="UI/DebugPanel/Scroll"]
+custom_minimum_size=Vector2(462,0)
 theme_override_colors/font_color=Color(0.4,1,0.6,1)
 theme_override_font_sizes/font_size=13
+theme_override_fonts/font=SubResource("TerminalFont")
 [node name="Crosshair" type="Label" parent="UI"]
 anchors_preset=8
 anchor_left=0.5
@@ -262,6 +294,7 @@ anchor_top=0.5
 anchor_right=0.5
 anchor_bottom=0.5
 text="·"
+theme_override_colors/font_color=Color(0.78,0.88,0.82,0.72)
 [node name="StatusTimer" type="Timer" parent="UI"]
 wait_time=4
 one_shot=true
