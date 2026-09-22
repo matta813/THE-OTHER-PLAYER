@@ -5,11 +5,13 @@ const NAMES: Array[StringName] = [&"risk_tolerance", &"curiosity", &"trust", &"p
 var metrics: Dictionary = {}
 var samples: Dictionary = {}
 var confidence: Dictionary = {}
+var consistency: Dictionary = {}
+var last_evidence: Dictionary = {}
 var last_reason: Dictionary = {}
 
 func _init() -> void:
 	for name in NAMES:
-		metrics[name] = 0.5; samples[name] = 0; confidence[name] = 0.0; last_reason[name] = "No observations"
+		metrics[name] = 0.5; samples[name] = 0; confidence[name] = 0.0; consistency[name] = 0.65; last_evidence[name] = 0.5; last_reason[name] = "No observations"
 
 func apply(event: BehaviourEvent) -> void:
 	match event.event_type:
@@ -26,10 +28,15 @@ func apply(event: BehaviourEvent) -> void:
 
 func observe(name: StringName, evidence: float, weight: float, reason: String) -> void:
 	var n: int = int(samples.get(name, 0)); var adaptive_weight := weight / (1.0 + float(n) * 0.12)
+	var agreement := 1.0 - absf(float(metrics.get(name, 0.5)) - evidence)
+	if n > 0 and absf(float(last_evidence.get(name, 0.5)) - evidence) > 0.35:
+		consistency[name] = float(consistency.get(name, 0.65)) * 0.45
+	else:
+		consistency[name] = lerpf(float(consistency.get(name, 0.65)), agreement, 0.3)
 	metrics[name] = clampf(lerpf(float(metrics.get(name, 0.5)), evidence, adaptive_weight), 0.0, 1.0)
-	samples[name] = n + 1; confidence[name] = clampf(1.0 - exp(-float(n + 1) / 6.0), 0.0, 0.95); last_reason[name] = reason
+	samples[name] = n + 1; confidence[name] = clampf((1.0 - exp(-float(n + 1) / 5.0)) * float(consistency[name]), 0.0, 0.95); last_evidence[name] = evidence; last_reason[name] = reason
 
-func to_dict() -> Dictionary: return {"metrics": metrics.duplicate(true), "samples": samples.duplicate(true), "confidence": confidence.duplicate(true), "last_reason": last_reason.duplicate(true)}
+func to_dict() -> Dictionary: return {"metrics": metrics.duplicate(true), "samples": samples.duplicate(true), "confidence": confidence.duplicate(true), "consistency": consistency.duplicate(true), "last_evidence": last_evidence.duplicate(true), "last_reason": last_reason.duplicate(true)}
 func load_dict(data: Dictionary) -> void:
 	for name in NAMES:
-		metrics[name] = clampf(float(data.get("metrics", {}).get(String(name), 0.5)), 0.0, 1.0); samples[name] = int(data.get("samples", {}).get(String(name), 0)); confidence[name] = clampf(float(data.get("confidence", {}).get(String(name), 0.0)), 0.0, 1.0); last_reason[name] = str(data.get("last_reason", {}).get(String(name), "Restored"))
+		metrics[name] = clampf(float(data.get("metrics", {}).get(String(name), 0.5)), 0.0, 1.0); samples[name] = int(data.get("samples", {}).get(String(name), 0)); confidence[name] = clampf(float(data.get("confidence", {}).get(String(name), 0.0)), 0.0, 1.0); consistency[name] = clampf(float(data.get("consistency", {}).get(String(name), 0.65)), 0.0, 1.0); last_evidence[name] = clampf(float(data.get("last_evidence", {}).get(String(name), 0.5)), 0.0, 1.0); last_reason[name] = str(data.get("last_reason", {}).get(String(name), "Restored"))

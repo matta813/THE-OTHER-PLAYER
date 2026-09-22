@@ -8,7 +8,7 @@ func prompt_text(actor: Node) -> String: return "LOCKED // REMOTE CONTROL" if lo
 func _perform_interaction(_actor: Node) -> void:
 	if locked:
 		GameRuntime.behaviour.record(&"interaction_retried", global_position, stable_id, &"locked_door"); return
-	GameRuntime.predictions.observe(&"interact", stable_id, Time.get_ticks_msec() / 1000.0)
+	GameRuntime.predictions.observe(&"interact", stable_id, Time.get_unix_time_from_system())
 	opened = not opened; target_angle = open_angle if opened else 0.0; set_process(true); GameRuntime.behaviour.record(&"door_opened", global_position, stable_id); state_changed.emit()
 func remote_action(action: StringName, _payload: Dictionary = {}) -> bool:
 	if action == &"unlock":

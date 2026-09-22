@@ -1,5 +1,5 @@
 # Save System
 
-Save schema version 2 persists player transform, story phase, facility state by stable ID, asymmetric trust, raw telemetry, derived model confidence and samples, prediction history/statistics, and Other Player memory/task queue. Scheduled actions serialize remaining delay rather than process-local timestamps. Power-request elapsed time also survives loading.
+Save schema version 3 persists player transform, story phase, facility state by stable ID, asymmetric trust, raw telemetry, derived model confidence/samples/consistency, prediction history/statistics, Other Player memory/task queue, habit memory, expectations, suspicion, adaptive-director pacing, and trust-strategy history. Scheduled actions serialize remaining delay rather than process-local timestamps. Power-request elapsed time also survives loading.
 
-Version 1 data loads with safe defaults. Loading applies state without reconnecting signals or replaying one-time narrative actions. Saves use JSON at `user://save.json`.
+Version 1/2 data migrates with safe adaptive defaults; old pending predictions are superseded because their process-local timestamps are not comparable. Loading applies state without reconnecting signals or replaying one-time narrative actions. Saves use JSON at `user://save.json`. `BehaviourProfile` defines a separate internal, versioned aggregate export/import format for future New Game+; it is not automatically written for players.

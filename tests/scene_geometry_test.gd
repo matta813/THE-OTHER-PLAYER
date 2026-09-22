@@ -32,6 +32,18 @@ func _ready() -> void:
 	(level.get_node("PowerSwitch") as PowerSwitch).interact(player)
 	check(GameRuntime.story_stage == 4 and (level.get_node("RoomLight") as Light3D).visible, "switch powers Room B")
 	check(GameRuntime.behaviour.model.samples[&"cooperation"] > 0, "slice updates behaviour model")
+	check(GameRuntime.director.last_decision.get("selected", "") == "DELAY_ACK", "established reply expectation selects a restrained delay")
+	var timeout_found := false
+	for item in GameRuntime.other_player.scheduled:
+		if item.action == &"expectation_timeout":
+			item.due = GameRuntime.other_player.now() - 0.01
+			timeout_found = true
+	check(timeout_found, "delayed reply schedules observable expectation window")
+	await get_tree().process_frame
+	check(GameRuntime.behaviour.count(&"expectation_violated") == 1 and GameRuntime.suspicion.value > 0.0, "unmet reply is logged only after silence")
+	var save_data := SaveSystem.build_data(player)
+	check(SaveSystem.apply_data(player, JSON.parse_string(JSON.stringify(save_data))), "adaptive scene state round-trips while reply is pending")
+	check(GameRuntime.other_player.scheduled.size() > 0 and GameRuntime.behaviour.count(&"expectation_violated") == 1, "load retains pending reply without replaying the violation")
 	Input.action_press("crouch")
 	for frame in range(20): await get_tree().physics_frame
 	var player_collider := level.get_node("Player/Collision") as CollisionShape3D
@@ -39,7 +51,7 @@ func _ready() -> void:
 	check(camera.global_position.y < 1.35, "crouch lowers camera")
 	check(absf(player_collider.global_position.y - capsule.height * 0.5 - 0.1) < 0.1, "crouch keeps feet on floor")
 	Input.action_release("crouch")
-	print("SCENE AND FLOW: %d checks, %d failed" % [16, failures])
+	print("SCENE AND FLOW: 21 checks, %d failed" % failures)
 	get_tree().quit(failures)
 
 func ray(start: Vector3, end: Vector3, mask: int) -> Dictionary:
