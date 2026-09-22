@@ -41,6 +41,10 @@ func expire(now: float) -> void:
 	if not current.is_empty() and current.get("result") == "pending" and now > float(current.get("expiry", 0.0)):
 		current.result = "expired"; current.resolution_time = now; evaluated += 1; _sync()
 
+func preempt(now: float) -> void:
+	if current.is_empty() or current.get("result", "") != "pending": return
+	current.result = "preempted"; current.resolution_time = now; _sync()
+
 func _sync() -> void:
 	if not history.is_empty(): history[history.size() - 1] = current.duplicate(true)
 func accuracy() -> float: return float(correct) / float(evaluated) if evaluated > 0 else 0.0

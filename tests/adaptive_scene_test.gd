@@ -43,6 +43,8 @@ func _ready() -> void:
 	(level.get_node("PowerSwitch") as PowerSwitch).interact(player)
 	check(GameRuntime.story_stage == 4 and GameRuntime.director.last_decision.get("selected", "") != "DELAY_ACK", "unusual interventions do not stack in the same moment")
 	print("ADAPTIVE SCENE: %d checks, %d failed" % [checks, failures])
+	level.queue_free()
+	await get_tree().process_frame
 	get_tree().quit(failures)
 
 func check(condition: bool, label: String) -> void:

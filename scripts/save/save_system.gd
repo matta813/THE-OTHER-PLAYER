@@ -1,25 +1,39 @@
 class_name SaveSystem
 extends RefCounted
 
-const VERSION := 3
+const VERSION := 4
 const PATH := "user://save.json"
+const CHECKPOINT_PATH := "user://checkpoint.json"
 
 static func build_data(player: Node3D) -> Dictionary:
 	var states := {}
 	for id in GameRuntime.facility:
 		var node: Node = GameRuntime.facility[id]
 		if node.has_method("state_dict"): states[String(id)] = node.state_dict()
-	return {"version": VERSION, "player": [player.global_position.x, player.global_position.y, player.global_position.z], "player_rotation": player.rotation.y, "story_stage": GameRuntime.story_stage, "trust": GameRuntime.trust.to_dict(), "behaviour": GameRuntime.behaviour.to_dict(), "predictions": GameRuntime.predictions.to_dict(), "other_player": GameRuntime.other_player.to_dict(), "facility": states, "adaptive": {"habits": GameRuntime.habits.to_dict(), "expectations": GameRuntime.expectations.to_dict(), "suspicion": GameRuntime.suspicion.to_dict(), "director": GameRuntime.director.to_dict(), "trust_strategy": GameRuntime.trust_strategy.to_dict()}}
+	return {"version": VERSION, "player": [player.global_position.x, player.global_position.y, player.global_position.z], "player_rotation": player.rotation.y, "carried_item": String(player.carried_item_id) if player is FirstPersonController else "", "story_stage": GameRuntime.story_stage, "trust": GameRuntime.trust.to_dict(), "behaviour": GameRuntime.behaviour.to_dict(), "predictions": GameRuntime.predictions.to_dict(), "other_player": GameRuntime.other_player.to_dict(), "facility": states, "adaptive": {"habits": GameRuntime.habits.to_dict(), "expectations": GameRuntime.expectations.to_dict(), "suspicion": GameRuntime.suspicion.to_dict(), "director": GameRuntime.director.to_dict(), "trust_strategy": GameRuntime.trust_strategy.to_dict()}}
 
 static func save_game(player: Node3D) -> bool:
-	var file := FileAccess.open(PATH, FileAccess.WRITE)
+	return save_to(PATH, player)
+
+static func save_checkpoint(player: Node3D) -> bool: return save_to(CHECKPOINT_PATH, player)
+
+static func save_to(path: String, player: Node3D) -> bool:
+	var temporary := path + ".tmp"
+	var file := FileAccess.open(temporary, FileAccess.WRITE)
 	if file == null: return false
 	file.store_string(JSON.stringify(build_data(player), "  "))
-	return true
+	file.flush()
+	file.close()
+	return DirAccess.rename_absolute(ProjectSettings.globalize_path(temporary), ProjectSettings.globalize_path(path)) == OK
 
 static func load_game(player: Node3D) -> bool:
-	if not FileAccess.file_exists(PATH): return false
-	var data = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+	return load_from(PATH, player)
+
+static func load_checkpoint(player: Node3D) -> bool: return load_from(CHECKPOINT_PATH, player)
+
+static func load_from(path: String, player: Node3D) -> bool:
+	if not FileAccess.file_exists(path): return false
+	var data = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if not data is Dictionary: return false
 	return apply_data(player, data)
 
@@ -31,6 +45,7 @@ static func apply_data(player: Node3D, raw_data: Dictionary) -> bool:
 	if position.size() != 3: return false
 	player.global_position = Vector3(float(position[0]), float(position[1]), float(position[2]))
 	player.rotation.y = float(data.get("player_rotation", 0.0))
+	if player is FirstPersonController: player.set_carried_item(StringName(data.get("carried_item", "")))
 	GameRuntime.story_stage = int(data.get("story_stage", 0))
 	GameRuntime.trust.load_dict(data.get("trust", {}))
 	GameRuntime.behaviour.load_dict(data.get("behaviour", {}))

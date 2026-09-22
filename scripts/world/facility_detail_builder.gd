@@ -14,7 +14,9 @@ func _ready() -> void:
 	box("RoomARear", Vector3(0, 1.7, 7.4), Vector3(8, 3.4, 0.25), concrete, true)
 	box("DividerL", Vector3(-2.675, 1.7, -2.0), Vector3(2.65, 3.4, 0.28), concrete, true)
 	box("DividerR", Vector3(2.675, 1.7, -2.0), Vector3(2.65, 3.4, 0.28), concrete, true)
-	box("RoomBRear", Vector3(0, 1.7, -13.8), Vector3(8, 3.4, 0.25), concrete, true)
+	box("RoomBExitLeft", Vector3(-2.7, 1.7, -13.8), Vector3(2.6, 3.4, 0.25), concrete, true)
+	box("RoomBExitRight", Vector3(2.7, 1.7, -13.8), Vector3(2.6, 3.4, 0.25), concrete, true)
+	box("RoomBExitHeader", Vector3(0, 3.12, -13.8), Vector3(2.8, 0.3, 0.25), metal, true)
 	for side in [-1.0, 1.0]:
 		box("RoomBThresholdWall", Vector3(side * 2.7, 1.68, -7.0), Vector3(2.6, 3.36, 0.23), concrete, true)
 	box("RoomBThresholdHeader", Vector3(0, 3.12, -7.0), Vector3(2.8, 0.3, 0.26), metal, true)

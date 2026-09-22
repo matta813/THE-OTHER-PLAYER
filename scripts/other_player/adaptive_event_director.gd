@@ -16,6 +16,7 @@ func choose(context: StringName, candidates: Array[Dictionary], state: Dictionar
 		if category in ["SUSPICIOUS", "MANIPULATIVE"] and now - last_unusual_time < 20.0: continue
 		if int(state.get("stage", 0)) < int(candidate.get("min_stage", 0)): continue
 		if float(state.get("trust", 0.0)) < float(candidate.get("min_trust", 0.0)): continue
+		if float(state.get("prediction_confidence", 0.0)) < float(candidate.get("min_prediction_confidence", 0.0)): continue
 		if float(state.get("suspicion", 0.0)) < float(candidate.get("min_suspicion", 0.0)): continue
 		if category in ["SUSPICIOUS", "MANIPULATIVE"] and float(state.get("suspicion", 0.0)) > 0.38: continue
 		var habit_confidence: float = (state.get("habits") as BehaviourMemory).confidence_for(StringName(candidate.get("habit", "")), &"", float(state.get("world_time", Time.get_unix_time_from_system()))) if candidate.has("habit") else 0.0

@@ -79,6 +79,8 @@ func _ready() -> void:
 	check(absf(player_collider.global_position.y - capsule.height * 0.5 - 0.1) < 0.1, "crouch keeps feet on floor")
 	Input.action_release("crouch")
 	print("SCENE AND FLOW: 29 checks, %d failed" % failures)
+	level.queue_free()
+	await get_tree().process_frame
 	get_tree().quit(failures)
 
 func ray(start: Vector3, end: Vector3, mask: int) -> Dictionary:

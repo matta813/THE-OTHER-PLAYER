@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource path="res://scripts/world/vertical_slice.gd" type="Script" id="1"]
 [ext_resource path="res://scripts/player/first_person_controller.gd" type="Script" id="2"]
@@ -14,6 +14,8 @@
 [ext_resource path="res://assets/materials/facility_floor.tres" type="Material" id="12"]
 [ext_resource path="res://assets/materials/dark_rubber.tres" type="Material" id="13"]
 [ext_resource path="res://scripts/ui/terminal_typewriter.gd" type="Script" id="14"]
+[ext_resource path="res://scripts/world/chapter_wing_builder.gd" type="Script" id="15"]
+[ext_resource path="res://scripts/world/chapter_one_controller.gd" type="Script" id="16"]
 [sub_resource type="BoxMesh" id="Box"]
 size=Vector3(1,1,1)
 [sub_resource type="BoxShape3D" id="BoxShape"]
@@ -38,9 +40,9 @@ ambient_light_color=Color(0.2,0.23,0.22,1)
 ambient_light_energy=0.48
 fog_enabled=true
 fog_light_color=Color(0.12,0.16,0.17,1)
-fog_density=0.018
+fog_density=0.012
 volumetric_fog_enabled=true
-volumetric_fog_density=0.012
+volumetric_fog_density=0.006
 volumetric_fog_length=18.0
 tonemap_mode=2
 tonemap_exposure=1.05
@@ -369,4 +371,8 @@ theme_override_colors/font_color=Color(0.78,0.88,0.82,0.72)
 [node name="StatusTimer" type="Timer" parent="UI"]
 wait_time=4
 one_shot=true
+[node name="ChapterWing" type="Node3D" parent="."]
+script=ExtResource("15")
+[node name="ChapterOne" type="Node" parent="."]
+script=ExtResource("16")
 [connection signal="timeout" from="UI/StatusTimer" to="." method="_on_status_timer_timeout"]

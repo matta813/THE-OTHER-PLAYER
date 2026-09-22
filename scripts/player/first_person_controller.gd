@@ -9,8 +9,33 @@ signal focus_changed(prompt: String)
 @export var interaction_distance := 2.4
 @onready var head: Node3D = $Head; @onready var camera: Camera3D = $Head/Camera3D; @onready var ray: RayCast3D = $Head/Camera3D/InteractionRay; @onready var collider: CollisionShape3D = $Collision
 var pitch := 0.0; var bob_time := 0.0; var focused: Interactable; var last_yaw := 0.0
+var carried_item_id: StringName = &""
+var carry_mesh: MeshInstance3D
+var footstep_player: AudioStreamPlayer3D
+var footstep_distance := 0.0
+var previous_step_position := Vector3.ZERO
+var step_streams: Dictionary = {}
 func _ready() -> void:
 	floor_max_angle = deg_to_rad(max_slope_angle); ray.target_position = Vector3(0, 0, -interaction_distance); Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	carry_mesh = MeshInstance3D.new(); carry_mesh.name = "CarriedItem"; camera.add_child(carry_mesh)
+	carry_mesh.position = Vector3(0.3, -0.28, -0.55)
+	var shape := BoxMesh.new(); shape.size = Vector3(0.18, 0.06, 0.3); carry_mesh.mesh = shape
+	var material := StandardMaterial3D.new(); material.albedo_color = Color(0.36, 0.39, 0.35); material.metallic = 0.55; material.roughness = 0.48; carry_mesh.material_override = material
+	carry_mesh.visible = false
+	footstep_player = AudioStreamPlayer3D.new(); footstep_player.name = "Footsteps"; footstep_player.position = Vector3(0, -0.75, 0); footstep_player.max_distance = 8.0; footstep_player.volume_db = -16.0; add_child(footstep_player)
+	for surface in [&"concrete", &"metal", &"grating"]: step_streams[surface] = FacilitySoundLibrary.step(surface)
+	previous_step_position = global_position
+func has_carried_item() -> bool: return carried_item_id != &""
+func give_item(item_id: StringName) -> bool:
+	if item_id == &"" or has_carried_item(): return false
+	set_carried_item(item_id); return true
+func take_carried_item() -> StringName:
+	var result := carried_item_id
+	set_carried_item(&"")
+	return result
+func set_carried_item(item_id: StringName) -> void:
+	carried_item_id = item_id
+	if carry_mesh: carry_mesh.visible = has_carried_item()
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * mouse_sensitivity); pitch = clampf(pitch - event.relative.y * mouse_sensitivity, -1.42, 1.42); head.rotation.x = pitch
@@ -29,7 +54,22 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0.4:
 		bob_time += delta * step_bob_frequency * (target_speed / walk_speed); camera.position.y = sin(bob_time) * step_bob_amount
 	else: camera.position.y = move_toward(camera.position.y, 0.0, delta * 0.08)
-	move_and_slide(); _update_focus()
+	move_and_slide(); _update_footsteps(crouching); _update_focus()
+func _update_footsteps(crouching: bool) -> void:
+	var horizontal := Vector2(global_position.x - previous_step_position.x, global_position.z - previous_step_position.z).length()
+	previous_step_position = global_position
+	if not is_on_floor() or horizontal > 0.5:
+		footstep_distance = 0.0
+		return
+	footstep_distance += horizontal
+	var stride := 0.95 if crouching else (1.55 if Input.is_action_pressed("sprint") else 1.32)
+	if footstep_distance < stride: return
+	footstep_distance = fmod(footstep_distance, stride)
+	var surface: StringName = &"concrete"
+	if global_position.z < -52.0 and global_position.z > -59.0: surface = &"metal"
+	elif global_position.z < -27.0 and global_position.z > -33.0: surface = &"grating"
+	footstep_player.stream = step_streams[surface]
+	if DisplayServer.get_name() != "headless": footstep_player.play()
 func _update_focus() -> void:
 	var candidate := ray.get_collider() as Interactable if ray.is_colliding() else null
 	if candidate != focused:
