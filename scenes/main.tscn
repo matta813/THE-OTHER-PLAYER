@@ -13,6 +13,8 @@
 size=Vector3(1,1,1)
 [sub_resource type="BoxShape3D" id="BoxShape"]
 size=Vector3(1,1,1)
+[sub_resource type="BoxShape3D" id="FloorShape"]
+size=Vector3(8,0.4,22)
 [sub_resource type="CapsuleShape3D" id="Capsule"]
 radius=0.35
 height=1.75
@@ -53,50 +55,50 @@ environment=SubResource("Env")
 [node name="FacilityDetails" type="Node3D" parent="."]
 script=ExtResource("6")
 [node name="Floor" type="StaticBody3D" parent="."]
+position=Vector3(0,-0.1,-3.2)
 [node name="Mesh" type="MeshInstance3D" parent="Floor"]
 mesh=SubResource("Box")
 material_override=SubResource("Concrete")
-scale=Vector3(8,0.2,15)
+scale=Vector3(8,0.4,22)
 [node name="Collision" type="CollisionShape3D" parent="Floor"]
-shape=SubResource("BoxShape")
-scale=Vector3(8,0.2,15)
+shape=SubResource("FloorShape")
 [node name="Ceiling" type="MeshInstance3D" parent="."]
-position=Vector3(0,3.5,0)
+position=Vector3(0,3.5,-3.2)
 mesh=SubResource("Box")
 material_override=SubResource("Concrete")
-scale=Vector3(8,0.15,15)
+scale=Vector3(8,0.2,22)
 [node name="WallL" type="StaticBody3D" parent="."]
-position=Vector3(-4,1.7,0)
+position=Vector3(-4,1.7,-3.2)
 [node name="Mesh" type="MeshInstance3D" parent="WallL"]
 mesh=SubResource("Box")
 material_override=SubResource("Concrete")
-scale=Vector3(0.2,3.5,15)
+scale=Vector3(0.3,3.5,22)
 [node name="Collision" type="CollisionShape3D" parent="WallL"]
 shape=SubResource("BoxShape")
-scale=Vector3(0.2,3.5,15)
+scale=Vector3(0.3,3.5,22)
 [node name="WallR" type="StaticBody3D" parent="."]
-position=Vector3(4,1.7,0)
+position=Vector3(4,1.7,-3.2)
 [node name="Mesh" type="MeshInstance3D" parent="WallR"]
 mesh=SubResource("Box")
 material_override=SubResource("Concrete")
-scale=Vector3(0.2,3.5,15)
+scale=Vector3(0.3,3.5,22)
 [node name="Collision" type="CollisionShape3D" parent="WallR"]
 shape=SubResource("BoxShape")
-scale=Vector3(0.2,3.5,15)
+scale=Vector3(0.3,3.5,22)
 [node name="Door" type="StaticBody3D" parent="."]
-position=Vector3(0,1.35,-2)
+position=Vector3(-1.22,1.35,-2)
 script=ExtResource("3")
 stable_id=&"door_a"
 interaction_name="Electronic door"
 [node name="Mesh" type="MeshInstance3D" parent="Door"]
-position=Vector3(1,0,0)
+position=Vector3(1.22,0,0)
 mesh=SubResource("Box")
 material_override=SubResource("Metal")
-scale=Vector3(2,2.7,0.18)
+scale=Vector3(2.44,2.7,0.22)
 [node name="Collision" type="CollisionShape3D" parent="Door"]
-position=Vector3(1,0,0)
+position=Vector3(1.22,0,0)
 shape=SubResource("BoxShape")
-scale=Vector3(2,2.7,0.18)
+scale=Vector3(2.44,2.7,0.22)
 [node name="Audio" type="AudioStreamPlayer3D" parent="Door"]
 script=ExtResource("9")
 max_distance=12.0
@@ -166,17 +168,21 @@ scale=Vector3(0.52,0.72,0.18)
 [node name="Collision" type="CollisionShape3D" parent="InspectionPanel"]
 shape=SubResource("BoxShape")
 scale=Vector3(0.52,0.72,0.18)
-[node name="RoomLight" type="OmniLight3D" parent="."]
+[node name="RoomLight" type="SpotLight3D" parent="."]
 position=Vector3(0,3,-9)
+rotation=Vector3(-1.5708,0,0)
 visible=false
-omni_range=8
+spot_range=9
+spot_angle=58
 shadow_enabled=true
 light_color=Color(0.72,0.82,0.78,1)
-[node name="EntranceLight" type="OmniLight3D" parent="."]
+[node name="EntranceLight" type="SpotLight3D" parent="."]
 position=Vector3(0,3,4)
+rotation=Vector3(-1.5708,0,0)
 light_color=Color(0.55,0.68,0.72,1)
 light_energy=2.5
-omni_range=8
+spot_range=9
+spot_angle=62
 shadow_enabled=true
 [node name="CorridorEmergencyLight" type="OmniLight3D" parent="."]
 position=Vector3(-2.8,2.65,-5.0)
