@@ -1,2 +1,5 @@
 # Game Design
-The vertical slice establishes reliable remote cooperation before later expectation-breaking. Horror comes from observation, prediction, repetition, sound, delayed response, and environmental inconsistency—not combat or frequent jumpscares. UI is temporary or diegetic.
+
+The current slice establishes believable cooperation: a short terminal exchange, delayed remote unlock, a simple power request, and acknowledgement. Dialogue is deliberately terse. Fear is limited to uncertainty, inaccessible-space lighting, environmental contrast, and the sense that cooperation is being observed.
+
+The single prediction-based moment is conditional: repeated checks of the first locked door can cause the Other Player to illuminate Room B shortly before the player restores power. It reads as attentive teamwork and does not reveal the premise.
