@@ -37,7 +37,7 @@ func _terminal() -> void:
 
 func _other_action(action: StringName, target: StringName, payload: Dictionary) -> void:
 	if action == &"light_on" and target == &"room_b_light":
-		$RoomLight.visible = true; $RoomLight.light_energy = 2.8; GameRuntime.other_player.memory.anticipated_light = true; return
+		$RoomLight.visible = true; $RoomLight.light_energy = 4.0; $FacilityDetails.set_east_power(true); GameRuntime.other_player.memory.anticipated_light = true; return
 	var receiver := GameRuntime.get_facility(target)
 	if receiver and receiver.has_method("remote_action") and receiver.remote_action(action, payload):
 		if action == &"unlock":
@@ -52,7 +52,7 @@ func _begin_power_request() -> void:
 
 func _power(on: bool) -> void:
 	if not on: return
-	$RoomLight.visible = true; $RoomLight.light_energy = 3.8; GameRuntime.story_stage = 4; GameRuntime.trust.reliable_help(); GameRuntime.other_player.memory.last_player_response = Time.get_ticks_msec() / 1000.0 - float($PowerSwitch.get_meta("requested_at")); $Terminal.append_line("02: got it. thanks"); _status("LINK 02 // got it. thanks"); $MachineryIndicator.visible = true
+	$RoomLight.visible = true; $RoomLight.light_energy = 5.0; $FacilityDetails.set_east_power(true); GameRuntime.story_stage = 4; GameRuntime.trust.reliable_help(); GameRuntime.other_player.memory.last_player_response = Time.get_ticks_msec() / 1000.0 - float($PowerSwitch.get_meta("requested_at")); $Terminal.append_line("02: got it. thanks"); _status("LINK 02 // got it. thanks"); $MachineryIndicator.visible = true
 
 func _event(event: BehaviourEvent) -> void:
 	if event.event_type == &"interaction_retried" and event.target_id == &"door_a" and GameRuntime.behaviour.count(&"interaction_retried", &"door_a") > 1: GameRuntime.behaviour.record(&"door_rechecked", event.world_position, event.target_id)
@@ -65,7 +65,7 @@ func _show_terminal(text: String) -> void:
 func _status(text: String) -> void: $UI/Status.text = text; $UI/StatusTimer.start()
 func _on_status_timer_timeout() -> void: $UI/Status.text = ""
 func _restore_visual_state() -> void:
-	$RoomLight.visible = $PowerSwitch.powered or bool(GameRuntime.other_player.memory.get("anticipated_light", false)); $MachineryIndicator.visible = $PowerSwitch.powered; room_b_entered = GameRuntime.story_stage >= 3; corridor_entered = GameRuntime.story_stage >= 2
+	$RoomLight.visible = $PowerSwitch.powered or bool(GameRuntime.other_player.memory.get("anticipated_light", false)); $FacilityDetails.set_east_power($RoomLight.visible); $MachineryIndicator.visible = $PowerSwitch.powered; room_b_entered = GameRuntime.story_stage >= 3; corridor_entered = GameRuntime.story_stage >= 2
 
 func _update_debug(now: float) -> void:
 	var prediction: Dictionary = GameRuntime.predictions.current; var lines := ["OTHER PLAYER", " task: %s" % GameRuntime.other_player.current_task, " scheduled: %d" % GameRuntime.other_player.scheduled.size(), " confidence: %.2f" % GameRuntime.trust.other_player_confidence_in_player, " player trust: %.2f" % GameRuntime.trust.player_trust_in_other_player, "", "PLAYER MODEL"]

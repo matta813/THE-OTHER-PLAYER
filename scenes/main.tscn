@@ -9,6 +9,10 @@
 [ext_resource path="res://assets/materials/monitor_glow.tres" type="Material" id="7"]
 [ext_resource path="res://scripts/facility/inspection_prop.gd" type="Script" id="8"]
 [ext_resource path="res://scripts/audio/facility_audio_emitter.gd" type="Script" id="9"]
+[ext_resource path="res://assets/materials/painted_concrete.tres" type="Material" id="10"]
+[ext_resource path="res://assets/materials/bare_concrete.tres" type="Material" id="11"]
+[ext_resource path="res://assets/materials/facility_floor.tres" type="Material" id="12"]
+[ext_resource path="res://assets/materials/dark_rubber.tres" type="Material" id="13"]
 [sub_resource type="BoxMesh" id="Box"]
 size=Vector3(1,1,1)
 [sub_resource type="BoxShape3D" id="BoxShape"]
@@ -29,14 +33,19 @@ roughness=0.38
 background_mode=1
 background_color=Color(0.005,0.008,0.01,1)
 ambient_light_source=3
-ambient_light_color=Color(0.12,0.15,0.17,1)
-ambient_light_energy=0.28
+ambient_light_color=Color(0.2,0.23,0.22,1)
+ambient_light_energy=0.48
 fog_enabled=true
 fog_light_color=Color(0.12,0.16,0.17,1)
 fog_density=0.018
 volumetric_fog_enabled=true
-volumetric_fog_density=0.025
+volumetric_fog_density=0.012
 volumetric_fog_length=18.0
+tonemap_mode=2
+tonemap_exposure=1.05
+ssao_enabled=true
+ssao_radius=1.1
+ssao_intensity=1.2
 [sub_resource type="StandardMaterial3D" id="IndicatorGreen"]
 albedo_color=Color(0.02,0.16,0.06,1)
 emission_enabled=true
@@ -78,20 +87,20 @@ script=ExtResource("6")
 position=Vector3(0,-0.1,-3.2)
 [node name="Mesh" type="MeshInstance3D" parent="Floor"]
 mesh=SubResource("Box")
-material_override=SubResource("Concrete")
+material_override=ExtResource("12")
 scale=Vector3(8,0.4,22)
 [node name="Collision" type="CollisionShape3D" parent="Floor"]
 shape=SubResource("FloorShape")
 [node name="Ceiling" type="MeshInstance3D" parent="."]
 position=Vector3(0,3.5,-3.2)
 mesh=SubResource("Box")
-material_override=SubResource("Concrete")
+material_override=ExtResource("11")
 scale=Vector3(8,0.2,22)
 [node name="WallL" type="StaticBody3D" parent="."]
 position=Vector3(-4,1.7,-3.2)
 [node name="Mesh" type="MeshInstance3D" parent="WallL"]
 mesh=SubResource("Box")
-material_override=SubResource("Concrete")
+material_override=ExtResource("10")
 scale=Vector3(0.3,3.5,22)
 [node name="Collision" type="CollisionShape3D" parent="WallL"]
 shape=SubResource("BoxShape")
@@ -100,7 +109,7 @@ scale=Vector3(0.3,3.5,22)
 position=Vector3(4,1.7,-3.2)
 [node name="Mesh" type="MeshInstance3D" parent="WallR"]
 mesh=SubResource("Box")
-material_override=SubResource("Concrete")
+material_override=ExtResource("10")
 scale=Vector3(0.3,3.5,22)
 [node name="Collision" type="CollisionShape3D" parent="WallR"]
 shape=SubResource("BoxShape")
@@ -115,6 +124,37 @@ position=Vector3(1.22,0,0)
 mesh=SubResource("Box")
 material_override=SubResource("Metal")
 scale=Vector3(2.44,2.7,0.22)
+[node name="ObservationGlass" type="MeshInstance3D" parent="Door"]
+position=Vector3(1.22,0.52,0.121)
+mesh=SubResource("Box")
+material_override=ExtResource("13")
+scale=Vector3(0.82,0.3,0.025)
+[node name="WindowRimTop" type="MeshInstance3D" parent="Door"]
+position=Vector3(1.22,0.69,0.128)
+mesh=SubResource("Box")
+material_override=SubResource("Metal")
+scale=Vector3(0.95,0.045,0.05)
+[node name="WindowRimBottom" type="MeshInstance3D" parent="Door"]
+position=Vector3(1.22,0.35,0.128)
+mesh=SubResource("Box")
+material_override=SubResource("Metal")
+scale=Vector3(0.95,0.045,0.05)
+[node name="DoorHandle" type="MeshInstance3D" parent="Door"]
+position=Vector3(2.14,-0.18,0.2)
+mesh=SubResource("Box")
+material_override=SubResource("Metal")
+scale=Vector3(0.22,0.07,0.15)
+[node name="DoorKickPlate" type="MeshInstance3D" parent="Door"]
+position=Vector3(1.22,-0.96,0.125)
+mesh=SubResource("Box")
+material_override=ExtResource("13")
+scale=Vector3(2.2,0.43,0.025)
+[node name="DoorMarking" type="Label3D" parent="Door"]
+position=Vector3(1.22,-0.32,0.142)
+text="BARRIER 01  /  REMOTE LOCK"
+font_size=32
+pixel_size=0.0014
+modulate=Color(0.53,0.61,0.58,0.75)
 [node name="Collision" type="CollisionShape3D" parent="Door"]
 position=Vector3(1.22,0,0)
 shape=SubResource("BoxShape")
@@ -137,6 +177,18 @@ position=Vector3(0,0.18,0.37)
 mesh=SubResource("Box")
 material_override=ExtResource("7")
 scale=Vector3(0.52,0.48,0.025)
+[node name="ScreenText" type="Label3D" parent="Terminal"]
+position=Vector3(-0.22,0.3,0.396)
+text="LINK 02\nSEARCHING..."
+font_size=32
+pixel_size=0.002
+modulate=Color(0.44,1,0.69,1)
+outline_size=2
+[node name="ScreenHood" type="MeshInstance3D" parent="Terminal"]
+position=Vector3(0,0.48,0.37)
+mesh=SubResource("Box")
+material_override=SubResource("Metal")
+scale=Vector3(0.68,0.1,0.12)
 [node name="Collision" type="CollisionShape3D" parent="Terminal"]
 shape=SubResource("BoxShape")
 scale=Vector3(0.7,1.4,0.35)
@@ -152,6 +204,16 @@ interaction_name="East circuit breaker"
 mesh=SubResource("Box")
 material_override=SubResource("Metal")
 scale=Vector3(0.5,0.9,0.3)
+[node name="Lever" type="MeshInstance3D" parent="PowerSwitch"]
+position=Vector3(0,0.04,0.19)
+mesh=SubResource("Box")
+material_override=ExtResource("13")
+scale=Vector3(0.11,0.36,0.13)
+[node name="SwitchPlate" type="MeshInstance3D" parent="PowerSwitch"]
+position=Vector3(0,0.37,0.171)
+mesh=SubResource("Box")
+material_override=ExtResource("13")
+scale=Vector3(0.4,0.12,0.02)
 [node name="Collision" type="CollisionShape3D" parent="PowerSwitch"]
 shape=SubResource("BoxShape")
 scale=Vector3(0.5,0.9,0.3)
@@ -188,21 +250,17 @@ scale=Vector3(0.52,0.72,0.18)
 [node name="Collision" type="CollisionShape3D" parent="InspectionPanel"]
 shape=SubResource("BoxShape")
 scale=Vector3(0.52,0.72,0.18)
-[node name="RoomLight" type="SpotLight3D" parent="."]
+[node name="RoomLight" type="OmniLight3D" parent="."]
 position=Vector3(0,3,-9)
-rotation=Vector3(-1.5708,0,0)
 visible=false
-spot_range=9
-spot_angle=58
+omni_range=8.5
 shadow_enabled=true
 light_color=Color(0.72,0.82,0.78,1)
-[node name="EntranceLight" type="SpotLight3D" parent="."]
-position=Vector3(0,3,4)
-rotation=Vector3(-1.5708,0,0)
+[node name="EntranceLight" type="OmniLight3D" parent="."]
+position=Vector3(0,3,3)
 light_color=Color(0.55,0.68,0.72,1)
-light_energy=2.5
-spot_range=9
-spot_angle=62
+light_energy=4.0
+omni_range=8.0
 shadow_enabled=true
 [node name="CorridorEmergencyLight" type="OmniLight3D" parent="."]
 position=Vector3(-2.8,2.65,-5.0)
@@ -210,6 +268,16 @@ light_color=Color(0.85,0.12,0.045,1)
 light_energy=1.1
 omni_range=4.5
 shadow_enabled=true
+[node name="RoomBBackupLight" type="OmniLight3D" parent="."]
+position=Vector3(0,2.65,-10)
+light_color=Color(0.28,0.4,0.42,1)
+light_energy=1.5
+omni_range=6.0
+[node name="SwitchLocatorLight" type="OmniLight3D" parent="."]
+position=Vector3(2.65,1.8,-9.0)
+light_color=Color(0.85,0.48,0.2,1)
+light_energy=1.0
+omni_range=2.6
 [node name="DoorIndicator" type="OmniLight3D" parent="."]
 position=Vector3(1.45,2.5,-1.65)
 light_color=Color(1,0.12,0.03,1)
@@ -227,7 +295,7 @@ script=ExtResource("2")
 [node name="Collision" type="CollisionShape3D" parent="Player"]
 shape=SubResource("Capsule")
 [node name="Head" type="Node3D" parent="Player"]
-position=Vector3(0,1.65,0)
+position=Vector3(0,0.6,0)
 [node name="Camera3D" type="Camera3D" parent="Player/Head"]
 current=true
 [node name="InteractionRay" type="RayCast3D" parent="Player/Head/Camera3D"]

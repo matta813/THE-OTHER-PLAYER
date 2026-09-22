@@ -1,2 +1,2 @@
 # Building
-Godot 4.3+ on Linux is required. Run with `./tools/run.sh`, import/runtime-check with `./tools/check.sh`, and test deterministic logic with `./tools/test.sh`. The renderer is configured for Forward+ in project metadata; headless validation may fall back to the compatibility driver.
+Godot 4.3+ on Linux is required. Run with `./tools/run.sh`, import/runtime-check with `./tools/check.sh`, and run logic plus collision/vertical-flow tests with `./tools/test.sh`. The renderer is configured for Forward+ in project metadata; headless validation uses a dummy renderer and cannot judge lighting or shader appearance. For visual QA, run the game with Vulkan Forward+ and inspect both unpowered and powered Room B.

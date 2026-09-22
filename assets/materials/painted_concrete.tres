@@ -1,5 +1,12 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/facility_surface.gdshader" id="1"]
+
 [resource]
-albedo_color = Color(0.105, 0.12, 0.122, 1)
-roughness = 0.88
-metallic = 0.0
+shader = ExtResource("1")
+shader_parameter/base_color = Color(0.22, 0.245, 0.24, 1)
+shader_parameter/roughness_value = 0.88
+shader_parameter/metallic_value = 0.0
+shader_parameter/texture_scale = 2.4
+shader_parameter/wear_amount = 0.32
+shader_parameter/floor_tiles = false
