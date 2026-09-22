@@ -10,3 +10,5 @@ Saved/
 *.sdf
 *.suo
 *.xcodeproj
+.godot/
+*.log
