@@ -18,14 +18,26 @@ func _ready() -> void:
 	var camera: Camera3D = level.get_node("Player/Head/Camera3D")
 	check(camera.global_position.y > 1.4 and camera.global_position.y < 1.8, "standing eye height is human scale")
 	var terminal: FacilityTerminal = level.get_node("Terminal")
+	player.global_position = Vector3(-2.8, 1.0, 0.5)
+	await get_tree().physics_frame
 	terminal.interact(player)
 	check(GameRuntime.story_stage == 1 and not GameRuntime.other_player.scheduled.is_empty(), "terminal starts delayed remote task")
+	terminal.interact(player)
+	check(GameRuntime.behaviour.count(&"returned_to_terminal") == 0, "repeated terminal input without leaving is not a return habit")
+	player.global_position = Vector3(0, 1.0, 0)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	check((level.get_node("UI/Prompt") as Label).text.contains("LOCKED"), "locked door presents its unavailable state")
+	(level.get_node("Door") as ElectronicDoor).interact(player)
+	(level.get_node("Door") as ElectronicDoor).interact(player)
+	check(GameRuntime.behaviour.count(&"door_rechecked") == 0 and GameRuntime.habits.get_entry(&"REPEATED_INTERACTOR").observation_count == 2, "rapid retries do not masquerade as separated door rechecks")
 	var pending: Dictionary = GameRuntime.other_player.scheduled[0]
 	pending["due"] = GameRuntime.other_player.now() - 0.01
 	GameRuntime.other_player.scheduled[0] = pending
 	await get_tree().process_frame
 	await get_tree().process_frame
 	check(not (level.get_node("Door") as ElectronicDoor).locked and GameRuntime.story_stage == 2, "remote action unlocks door")
+	check((level.get_node("UI/Prompt") as Label).text.contains("Electronic door"), "focused prompt refreshes on remote unlock")
 	player.global_position = Vector3(0, 1.0, -7.5)
 	await get_tree().process_frame
 	check(GameRuntime.story_stage == 3 and not (level.get_node("RoomLight") as Light3D).visible, "Room B requests power while main light is off")
@@ -44,6 +56,21 @@ func _ready() -> void:
 	var save_data := SaveSystem.build_data(player)
 	check(SaveSystem.apply_data(player, JSON.parse_string(JSON.stringify(save_data))), "adaptive scene state round-trips while reply is pending")
 	check(GameRuntime.other_player.scheduled.size() > 0 and GameRuntime.behaviour.count(&"expectation_violated") == 1, "load retains pending reply without replaying the violation")
+	player.global_position = Vector3(-2.8, 1.0, 0.5)
+	await get_tree().process_frame
+	terminal.interact(player)
+	check(GameRuntime.behaviour.count(&"returned_to_terminal") == 1, "physical return during silence is recorded once")
+	terminal.interact(player)
+	check(GameRuntime.behaviour.count(&"returned_to_terminal") == 1, "repeated input while standing at terminal is not a second return")
+	var reassurance_found := false
+	for item in GameRuntime.other_player.scheduled:
+		if item.action == &"terminal_ack" and bool(item.payload.get("reassurance", false)):
+			reassurance_found = true
+			item.due = GameRuntime.other_player.now() - 0.01
+	check(reassurance_found, "terminal return replaces delayed reply with reassurance")
+	var suspicion_before := GameRuntime.suspicion.value
+	await get_tree().process_frame
+	check(GameRuntime.suspicion.value < suspicion_before and not level.awaiting_ack, "reassurance lowers suspicion and closes pending response")
 	Input.action_press("crouch")
 	for frame in range(20): await get_tree().physics_frame
 	var player_collider := level.get_node("Player/Collision") as CollisionShape3D
@@ -51,7 +78,7 @@ func _ready() -> void:
 	check(camera.global_position.y < 1.35, "crouch lowers camera")
 	check(absf(player_collider.global_position.y - capsule.height * 0.5 - 0.1) < 0.1, "crouch keeps feet on floor")
 	Input.action_release("crouch")
-	print("SCENE AND FLOW: 21 checks, %d failed" % failures)
+	print("SCENE AND FLOW: 29 checks, %d failed" % failures)
 	get_tree().quit(failures)
 
 func ray(start: Vector3, end: Vector3, mask: int) -> Dictionary:

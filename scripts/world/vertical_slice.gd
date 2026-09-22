@@ -8,6 +8,8 @@ extends Node3D
 @onready var debug: Label = $UI/DebugPanel/Scroll/Debug
 
 var terminal_visits := 0
+var terminal_left_since_last_use := false
+var last_door_attempt_time := -100000.0
 var room_b_entered := false
 var corridor_entered := false
 var corridor_decision_made := false
@@ -39,6 +41,8 @@ func _process(delta: float) -> void:
 	var clock := Time.get_ticks_msec() / 1000.0
 	var world_time := Time.get_unix_time_from_system()
 	GameRuntime.predictions.expire(world_time)
+	if terminal_visits > 0 and player.global_position.distance_to($Terminal.global_position) > 3.0:
+		terminal_left_since_last_use = true
 	if not corridor_entered and player.global_position.z < -2.8:
 		corridor_entered = true
 		GameRuntime.behaviour.record(&"room_entered", player.global_position, &"service_corridor")
@@ -70,8 +74,10 @@ func _process(delta: float) -> void:
 	if $UI/DebugPanel.visible: _update_debug(world_time)
 
 func _terminal() -> void:
+	if terminal_visits > 0 and terminal_left_since_last_use:
+		GameRuntime.behaviour.record(&"returned_to_terminal", player.global_position, &"terminal_a")
+	terminal_left_since_last_use = false
 	terminal_visits += 1
-	if terminal_visits > 1: GameRuntime.behaviour.record(&"returned_to_terminal", player.global_position, &"terminal_a")
 	_show_terminal($Terminal.text)
 	if GameRuntime.story_stage == 0:
 		GameRuntime.story_stage = 1
@@ -80,7 +86,7 @@ func _terminal() -> void:
 		GameRuntime.expectations.observe(&"partner_reply", true, Time.get_unix_time_from_system())
 		_show_terminal($Terminal.text, "02: you there?")
 		GameRuntime.other_player.schedule(&"unlock", &"door_a", 0.55, {"task": "Tracing door control"})
-	elif awaiting_ack and GameRuntime.suspicion.value >= 0.13:
+	elif awaiting_ack and GameRuntime.trust_strategy.should_reassure(GameRuntime.suspicion, Time.get_unix_time_from_system()):
 		var reassurance := GameRuntime.director.choose(&"reassurance", SliceEventOptions.reassurance(), GameRuntime.adaptive_state(), Time.get_unix_time_from_system())
 		if reassurance.get("id", "") == "REASSURE_NOW":
 			GameRuntime.other_player.cancel_action(&"terminal_ack", &"terminal_a")
@@ -164,11 +170,13 @@ func _power(on: bool) -> void:
 		GameRuntime.other_player.schedule(&"terminal_ack", &"terminal_a", 0.2, {"task": "Confirming power", "message": "got it. thanks"})
 
 func _event(event: BehaviourEvent) -> void:
-	if event.event_type == &"interaction_retried" and event.target_id == &"door_a" and GameRuntime.behaviour.count(&"interaction_retried", &"door_a") > 1:
-		GameRuntime.behaviour.record(&"door_rechecked", event.world_position, event.target_id)
-		if GameRuntime.story_stage == 1 and not interim_message_sent and GameRuntime.other_player.delay_action(&"unlock", &"door_a", 1.5):
-			interim_message_sent = true
-			GameRuntime.other_player.schedule(&"display_text", &"terminal_a", 0.05, {"task": "Checking door controller", "text": "02: sec"})
+	if event.event_type == &"interaction_retried" and event.target_id == &"door_a":
+		if GameRuntime.behaviour.count(&"interaction_retried", &"door_a") > 1 and event.timestamp - last_door_attempt_time >= 2.5:
+			GameRuntime.behaviour.record(&"door_rechecked", event.world_position, event.target_id)
+			if GameRuntime.story_stage == 1 and not interim_message_sent and GameRuntime.other_player.delay_action(&"unlock", &"door_a", 1.5):
+				interim_message_sent = true
+				GameRuntime.other_player.schedule(&"display_text", &"terminal_a", 0.05, {"task": "Checking door controller", "text": "02: sec"})
+		last_door_attempt_time = event.timestamp
 	if event.event_type == &"unrelated_interaction" and GameRuntime.story_stage == 3 and not optional_exploration_logged:
 		optional_exploration_logged = true
 		GameRuntime.behaviour.record(&"optional_area_explored", event.world_position, event.target_id, &"power_request")
@@ -183,7 +191,7 @@ func _restore_visual_state() -> void:
 	$RoomLight.light_energy = 5.0 if $PowerSwitch.powered else 4.0
 	$FacilityDetails.set_east_power($RoomLight.visible)
 	$MachineryIndicator.visible = $PowerSwitch.powered
-	$DoorIndicator.light_color = Color(0.2, 1.0, 0.45) if not $ElectronicDoor.locked else Color(1.0, 0.16, 0.1)
+	$DoorIndicator.light_color = Color(0.2, 1.0, 0.45) if not $Door.locked else Color(1.0, 0.16, 0.1)
 	room_b_entered = GameRuntime.story_stage >= 3 or player.global_position.z < -7.0
 	corridor_entered = GameRuntime.story_stage >= 3 or player.global_position.z < -2.8
 	corridor_decision_made = GameRuntime.story_stage >= 3 or GameRuntime.director.last_decision.get("context", "") == "corridor"
@@ -195,6 +203,10 @@ func _restore_visual_state() -> void:
 	request_last_position = player.global_position
 	stationary_seconds = 0.0
 	terminal_visits = GameRuntime.behaviour.count(&"returned_to_terminal") + (1 if GameRuntime.story_stage > 0 else 0)
+	terminal_left_since_last_use = terminal_visits > 0 and player.global_position.distance_to($Terminal.global_position) > 3.0
+	last_door_attempt_time = -100000.0
+	for event in GameRuntime.behaviour.events:
+		if event.event_type == &"interaction_retried" and event.target_id == &"door_a": last_door_attempt_time = event.timestamp
 	terminal_panel.visible = false
 	typewriter.set_process(false)
 	awaiting_ack = false

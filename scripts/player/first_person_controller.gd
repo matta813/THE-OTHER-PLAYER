@@ -33,4 +33,8 @@ func _physics_process(delta: float) -> void:
 func _update_focus() -> void:
 	var candidate := ray.get_collider() as Interactable if ray.is_colliding() else null
 	if candidate != focused:
+		if is_instance_valid(focused) and focused.state_changed.is_connected(_refresh_prompt): focused.state_changed.disconnect(_refresh_prompt)
 		focused = candidate; focus_changed.emit(focused.prompt_text(self) if focused else "")
+		if is_instance_valid(focused): focused.state_changed.connect(_refresh_prompt)
+func _refresh_prompt() -> void:
+	if is_instance_valid(focused): focus_changed.emit(focused.prompt_text(self))

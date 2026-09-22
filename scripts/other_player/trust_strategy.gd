@@ -9,7 +9,7 @@ func record_help(trust: TrustModel, suspicion: SuspicionModel, expectation: Expe
 	if replied: expectation.observe(&"partner_reply", true, when)
 
 func should_reassure(suspicion: SuspicionModel, now: float) -> bool:
-	return suspicion.value >= 0.32 and now - last_reassurance_time > 30.0
+	return suspicion.value >= 0.13 and now - last_reassurance_time > 30.0
 
 func record_reassurance(now: float, suspicion: SuspicionModel) -> void:
 	last_reassurance_time = now; suspicion.reassure(now)

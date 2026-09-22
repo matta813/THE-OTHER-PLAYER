@@ -5,7 +5,7 @@ var total := 0
 
 func _ready() -> void:
 	test_behaviour_smoothing(); test_event_round_trip(); test_trust_bounds(); test_prediction_evaluation(); test_prediction_expiry(); test_scheduler_timing(); test_save_schema(); test_save_load_round_trip()
-	test_habit_evidence(); test_habit_detector(); test_expectations(); test_suspicion(); test_context_prediction(); test_action_scoring(); test_adaptive_save_and_profile()
+	test_habit_evidence(); test_habit_detector(); test_expectations(); test_suspicion(); test_context_prediction(); test_action_scoring(); test_adaptive_save_and_profile(); test_due_action_order()
 	print("TESTS: %d passed, %d failed" % [total - failures, failures]); get_tree().quit(failures)
 
 func test_behaviour_smoothing() -> void:
@@ -45,6 +45,18 @@ func test_prediction_expiry() -> void:
 func test_scheduler_timing() -> void:
 	var agent := OtherPlayerAgent.new(); add_child(agent); var first := agent.schedule(&"unlock", &"door", 0.2, {}); agent.scheduled.clear(); var second := agent.schedule(&"unlock", &"door", 0.8, {})
 	check(first > 0.7 and second > first, "complex tasks receive longer contextual delay"); agent.queue_free()
+
+func test_due_action_order() -> void:
+	var agent := OtherPlayerAgent.new(); add_child(agent)
+	var seen: Array[String] = []
+	agent.action_due.connect(func(action: StringName, _target: StringName, _payload: Dictionary) -> void: seen.append(String(action)))
+	agent.schedule(&"expectation_timeout", &"terminal_a", 0.1)
+	agent.schedule(&"terminal_ack", &"terminal_a", 0.2)
+	agent.scheduled[0].due = agent.now() - 2.0
+	agent.scheduled[1].due = agent.now() - 1.0
+	agent._process(0.0)
+	check(seen == ["expectation_timeout", "terminal_ack"] and agent.scheduled.is_empty(), "same-frame remote actions preserve due-time order")
+	agent.queue_free()
 
 func test_save_schema() -> void:
 	var player := Node3D.new(); add_child(player); player.position = Vector3(2, 3, 4); var data := SaveSystem.build_data(player); var decoded = JSON.parse_string(JSON.stringify(data))
