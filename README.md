@@ -17,12 +17,12 @@ Controls: WASD movement, mouse look, Shift sprint, Ctrl crouch, E interact, Esc 
 ## Build and validation
 
 ```sh
-./tools/check.sh
-./tools/test.sh
-./tools/export_release.sh
+./tools/ci_validate.sh
+./tools/ci_test.sh
+./tools/ci_build.sh
 ```
 
-The export script validates the project, runs the tests, and creates `build/linux/the-other-player.x86_64`. Install the matching Godot 4.7.2 export templates first. Run the executable from its build directory; `THIRD_PARTY.md` is copied alongside it. Build output and Godot import caches are ignored by Git. See `docs/BUILDING.md` for details.
+The local CI scripts validate the generated art and project, run six test scenes, and create `build/linux/the-other-player.x86_64`. Install the matching Godot 4.7.2 export templates first. Run the executable from its build directory; `THIRD_PARTY.md` is copied alongside it. Build output and Godot import caches are ignored by Git. See `docs/BUILDING.md` for details.
 
 ## Repository
 
@@ -31,7 +31,7 @@ The export script validates the project, runs the tests, and creates `build/linu
 - `scripts/save/`: versioned save data and slot metadata.
 - `scripts/world/`, `scripts/facility/`, `scripts/other_player/`: chapter spaces, interactions and adaptive systems.
 - `scripts/ui/`, `scripts/audio/`: menus, captions, terminal and sound.
-- `assets/`: procedural materials/shader and future authored asset categories; see `docs/ASSET_PIPELINE.md`.
+- `art/`: editable Blender source and manifest; `assets/models/`: 29 generated GLB environment and prop modules. See `docs/BLENDER_PIPELINE.md`.
 - `resources/`: authored dialogue. `tests/` and `tools/`: checks, scene tests and build scripts.
 
-This is a pre-alpha foundation. Menu, settings and slot flows exist, but authored audio/art, full accessibility, calibrated lighting/materials, measured playtime and a complete human playtest are still outstanding.
+This remains a pre-alpha production pass. Chapter 1 has integrated Blender visuals, mechanical motion, sound layers and shared menu styling, but several spaces still look simple. Recorded audio, a fuller terminal/loading design, route-wide performance measurement, verified 30–45 minute playtime and a first-time human playtest remain outstanding. See `docs/CI.md`, `docs/PERFORMANCE.md` and `docs/ROADMAP.md`.

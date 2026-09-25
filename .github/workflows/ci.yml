@@ -1,0 +1,49 @@
+name: Godot CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      XDG_DATA_HOME: ${{ github.workspace }}/.ci-data
+      XDG_CONFIG_HOME: ${{ github.workspace }}/.ci-config
+      XDG_CACHE_HOME: ${{ github.workspace }}/.ci-cache
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.7.2 editor and Linux templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable
+          curl --fail --location --retry 3 --output /tmp/godot.zip "$base/Godot_v4.7.2-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d /tmp/godot-editor
+          install -m 755 /tmp/godot-editor/Godot_v4.7.2-stable_linux.x86_64 /usr/local/bin/godot
+          curl --fail --location --retry 3 --output /tmp/templates.tpz "$base/Godot_v4.7.2-stable_export_templates.tpz"
+          python3 tools/install_linux_templates.py /tmp/templates.tpz "$XDG_DATA_HOME/godot/export_templates/4.7.2.stable"
+          godot --version
+      - name: Validate project and assets
+        run: ./tools/ci_validate.sh
+      - name: Run tests
+        run: ./tools/ci_test.sh
+      - name: Export Linux release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/linux
+          godot --headless --path . --export-release Linux build/linux/the-other-player.x86_64
+          test -x build/linux/the-other-player.x86_64
+          test -s build/linux/the-other-player.pck
+          cp THIRD_PARTY.md build/linux/THIRD_PARTY.md
+      - name: Upload Linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: the-other-player-linux
+          path: build/linux/
+          if-no-files-found: error
+          retention-days: 14
