@@ -31,7 +31,7 @@ The local CI scripts validate the generated art and project, run seven test scen
 - `scripts/save/`: versioned save data and slot metadata.
 - `scripts/world/`, `scripts/facility/`, `scripts/other_player/`: chapter spaces, interactions and adaptive systems.
 - `scripts/ui/`, `scripts/audio/`: menus, captions, terminal and sound.
-- `art/`: editable Blender source and manifest; `assets/models/`: 29 generated GLB environment and prop modules. See `docs/BLENDER_PIPELINE.md`.
+- `art/`: editable Blender source and manifest; `assets/models/`: 31 generated GLB environment and prop modules. See `docs/BLENDER_PIPELINE.md`.
 - `resources/`: authored dialogue. `tests/` and `tools/`: checks, scene tests and build scripts.
 
 This remains a pre-alpha production pass. Chapter 1 has integrated Blender visuals, mechanical motion, sound layers and shared menu styling, but several spaces still look simple. Recorded audio, a fuller terminal/loading design, route-wide performance measurement, verified 30–45 minute playtime and a first-time human playtest remain outstanding. See `docs/CI.md`, `docs/PERFORMANCE.md` and `docs/ROADMAP.md`.
