@@ -43,6 +43,7 @@ func _ready() -> void:
 	hatch.item_collected.connect(_on_item_collected)
 	for id in [&"ventilation_breaker", &"starter_breaker", &"security_breaker", &"door_breaker"]:
 		(wing.object(id) as CircuitBreaker).grid = grid
+		(wing.object(id) as CircuitBreaker).load_state({})
 	grid.circuit_changed.connect(_on_circuit_changed)
 	_apply_power_dependencies()
 	_update_power_readout()
@@ -221,6 +222,9 @@ func _update_power_readout() -> void:
 
 func _apply_power_dependencies() -> void:
 	(wing.object(&"camera_console") as SecurityCameraConsole).set_powered(grid.is_powered(&"security"))
+	wing.set_zone_power("security", grid.is_powered(&"security"))
+	wing.set_zone_power("maintenance", grid.is_powered(&"ventilation"))
+	wing.set_zone_power("observation", grid.is_powered(&"ventilation"))
 	for id in [&"airlock_inner", &"airlock_outer"]:
 		(wing.object(id) as ElectronicDoor).remote_action(&"power_on" if grid.is_powered(&"door_controls") else &"power_off")
 	var control := wing.object(&"airlock_control") as AirlockControl
@@ -272,8 +276,9 @@ func _on_airlock_requested() -> void:
 	_checkpoint(5)
 
 func _on_airlock_phase(next: int) -> void:
+	wing.play_airlock_phase(next)
 	var light: OmniLight3D = wing.lights.get("airlock")
-	if light: light.light_color = Color(0.9, 0.46, 0.22) if next in [AirlockSystem.Phase.SEALING, AirlockSystem.Phase.PRESSURIZING] else Color(0.64, 0.74, 0.8)
+	if light: light.light_color = Color(0.9, 0.46, 0.22) if next in [AirlockSystem.Phase.SEALING, AirlockSystem.Phase.PRESSURIZING] and not GameSettings.get_value("reduce_flashing") else Color(0.64, 0.74, 0.8)
 
 func _on_airlock_opened() -> void:
 	GameRuntime.behaviour.record(&"airlock_opened", player.global_position, &"airlock_outer", &"chapter_01")

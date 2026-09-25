@@ -1,6 +1,7 @@
 class_name FirstPersonController
 extends CharacterBody3D
 signal focus_changed(prompt: String)
+signal interaction_progress(progress: float)
 @export_group("Movement")
 @export var walk_speed := 3.1; @export var sprint_speed := 4.8; @export var crouch_speed := 1.8; @export var ground_acceleration := 9.0; @export var ground_deceleration := 12.0; @export var gravity := 18.0; @export var max_slope_angle := 46.0
 @export_group("View")
@@ -15,17 +16,21 @@ var footstep_player: AudioStreamPlayer3D
 var footstep_distance := 0.0
 var previous_step_position := Vector3.ZERO
 var step_streams: Dictionary = {}
+var footstep_index := 0
 var sprint_active := false
 var crouch_active := false
+var hold_target: Interactable
+var hold_elapsed := 0.0
 func _ready() -> void:
-	floor_max_angle = deg_to_rad(max_slope_angle); ray.target_position = Vector3(0, 0, -interaction_distance); Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	floor_max_angle = deg_to_rad(max_slope_angle); ray.target_position = Vector3(0, 0, -interaction_distance); if OS.get_environment("TOP_CAPTURE_DIR").is_empty(): Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	carry_mesh = MeshInstance3D.new(); carry_mesh.name = "CarriedItem"; camera.add_child(carry_mesh)
 	carry_mesh.position = Vector3(0.3, -0.28, -0.55)
 	var shape := BoxMesh.new(); shape.size = Vector3(0.18, 0.06, 0.3); carry_mesh.mesh = shape
 	var material := StandardMaterial3D.new(); material.albedo_color = Color(0.36, 0.39, 0.35); material.metallic = 0.55; material.roughness = 0.48; carry_mesh.material_override = material
 	carry_mesh.visible = false
 	footstep_player = AudioStreamPlayer3D.new(); footstep_player.name = "Footsteps"; footstep_player.position = Vector3(0, -0.75, 0); footstep_player.max_distance = 8.0; footstep_player.volume_db = -16.0; footstep_player.bus = "SFX"; add_child(footstep_player)
-	for surface in [&"concrete", &"metal", &"grating"]: step_streams[surface] = FacilitySoundLibrary.step(surface)
+	for surface in [&"concrete", &"metal", &"grating"]:
+		step_streams[surface] = [FacilitySoundLibrary.step(surface, 0), FacilitySoundLibrary.step(surface, 1), FacilitySoundLibrary.step(surface, 2)]
 	previous_step_position = global_position
 func has_carried_item() -> bool: return carried_item_id != &""
 func give_item(item_id: StringName) -> bool:
@@ -44,7 +49,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var sensitivity := float(GameSettings.get_value("mouse_sensitivity"))
 		rotate_y(-event.relative.x * sensitivity); pitch = clampf(pitch + event.relative.y * sensitivity * (1.0 if GameSettings.get_value("invert_y") else -1.0), -1.42, 1.42); head.rotation.x = pitch
-	if event.is_action_pressed("interact") and focused: focused.interact(self)
+	if event.is_action_pressed("interact") and focused:
+		var duration := focused.required_hold_duration()
+		if duration <= 0.0 or not focused.can_interact(self): focused.interact(self)
+		elif GameSettings.get_value("interaction_toggle") and hold_target == focused: _clear_hold()
+		else:
+			hold_target = focused
+			hold_elapsed = 0.0
+			interaction_progress.emit(0.0)
 func _physics_process(delta: float) -> void:
 	if not is_on_floor(): velocity.y -= gravity * delta
 	else: velocity.y = -0.5
@@ -59,7 +71,7 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0.4:
 		bob_time += delta * step_bob_frequency * (target_speed / walk_speed); camera.position.y = sin(bob_time) * step_bob_amount * (0.0 if GameSettings.get_value("reduce_motion") else float(GameSettings.get_value("camera_bob")))
 	else: camera.position.y = move_toward(camera.position.y, 0.0, delta * 0.08)
-	move_and_slide(); _update_footsteps(crouching); _update_focus()
+	move_and_slide(); _update_footsteps(crouching); _update_focus(); _update_hold(delta)
 func _update_footsteps(crouching: bool) -> void:
 	var horizontal := Vector2(global_position.x - previous_step_position.x, global_position.z - previous_step_position.z).length()
 	previous_step_position = global_position
@@ -73,11 +85,34 @@ func _update_footsteps(crouching: bool) -> void:
 	var surface: StringName = &"concrete"
 	if global_position.z < -52.0 and global_position.z > -59.0: surface = &"metal"
 	elif global_position.z < -27.0 and global_position.z > -33.0: surface = &"grating"
-	footstep_player.stream = step_streams[surface]
+	footstep_index += 1
+	footstep_player.stream = step_streams[surface][footstep_index % 3]
 	if DisplayServer.get_name() != "headless": footstep_player.play()
+func _clear_hold() -> void:
+	hold_target = null
+	hold_elapsed = 0.0
+	interaction_progress.emit(0.0)
+
+func _update_hold(delta: float) -> void:
+	if not is_instance_valid(hold_target): return
+	if hold_target != focused or not hold_target.can_interact(self) or (not GameSettings.get_value("interaction_toggle") and not Input.is_action_pressed("interact")):
+		_clear_hold()
+		return
+	var duration := hold_target.required_hold_duration()
+	if duration <= 0.0:
+		_clear_hold()
+		return
+	hold_elapsed += delta
+	interaction_progress.emit(clampf(hold_elapsed / duration, 0.0, 1.0))
+	if hold_elapsed >= duration:
+		var completed := hold_target
+		_clear_hold()
+		completed.interact(self)
+
 func _update_focus() -> void:
 	var candidate := ray.get_collider() as Interactable if ray.is_colliding() else null
 	if candidate != focused:
+		_clear_hold()
 		if is_instance_valid(focused) and focused.state_changed.is_connected(_refresh_prompt): focused.state_changed.disconnect(_refresh_prompt)
 		focused = candidate; focus_changed.emit(focused.prompt_text(self) if focused else "")
 		if is_instance_valid(focused): focused.state_changed.connect(_refresh_prompt)

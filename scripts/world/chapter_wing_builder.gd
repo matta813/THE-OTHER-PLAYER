@@ -14,6 +14,7 @@ var objects: Dictionary = {}
 var lights: Dictionary = {}
 var audio_zones: Dictionary = {}
 var power_readout: Label3D
+var airlock_audio: AudioStreamPlayer3D
 
 func _ready() -> void:
 	_build_shell()
@@ -21,8 +22,50 @@ func _ready() -> void:
 	_build_task_stations()
 	_build_room_props()
 	_build_lighting()
+	_install_production_kit()
+	airlock_audio = AudioStreamPlayer3D.new(); airlock_audio.name = "AirlockMechanics"; airlock_audio.position = Vector3(0, 1.6, -55); airlock_audio.max_distance = 16.0; airlock_audio.volume_db = -11.0; airlock_audio.bus = "SFX"; add_child(airlock_audio)
 
 func object(id: StringName) -> Node: return objects.get(id)
+
+func set_zone_power(id: String, enabled: bool) -> void:
+	var player := audio_zones.get(id) as AudioStreamPlayer3D
+	if player == null or DisplayServer.get_name() == "headless": return
+	if enabled:
+		if not player.playing: player.play()
+		player.volume_db = -32.0 if id in ["observation", "airlock"] else -27.0
+	else: player.stop()
+
+func play_airlock_phase(phase: int) -> void:
+	if airlock_audio == null or DisplayServer.get_name() == "headless": return
+	match phase:
+		AirlockSystem.Phase.SEALING: airlock_audio.stream = FacilitySoundLibrary.relay()
+		AirlockSystem.Phase.PRESSURIZING: airlock_audio.stream = FacilitySoundLibrary.pressure()
+		AirlockSystem.Phase.OPENING: airlock_audio.stream = FacilitySoundLibrary.motor()
+		_: return
+	airlock_audio.play()
+
+func _install_production_kit() -> void:
+	# Exterior wall modules leave the proven collision shell and stable task layout intact.
+	for side in [-1.0, 1.0]:
+		for index in range(20):
+			var z := -15.2 - index * 2.4
+			ProductionKit.add_visual(self, "wall_section", Vector3(side * 5.80, 1.7, z), Vector3(0, -side * PI * 0.5, 0))
+		for z in [-18.0, -30.0, -42.0, -54.0]:
+			ProductionKit.add_visual(self, "cable_tray", Vector3(side * 5.45, 2.88, z))
+			ProductionKit.add_visual(self, "pipe_straight", Vector3(side * 5.48, 2.46, z))
+	for z in [-17.8, -23.2, -29.5, -36.0, -41.0, -44.5, -48.5, -54.5]:
+		ProductionKit.add_visual(self, "industrial_light", Vector3(0, 3.19, z))
+	for side in [-1.0, 1.0]:
+		for z in [-53.3, -55.6]:
+			ProductionKit.add_visual(self, "reinforced_wall", Vector3(side * 1.29, 1.7, z), Vector3(0, -side * PI * 0.5, 0))
+		ProductionKit.add_visual(self, "pipe_straight", Vector3(side * 1.15, 2.55, -54.5))
+	for z in [-52.0, -58.0]:
+		ProductionKit.add_visual(self, "door_frame", Vector3(0, 1.48, z))
+		ProductionKit.add_visual(self, "emergency_light", Vector3(0, 2.88, z + 0.3))
+	ProductionKit.add_visual(self, "equipment_rack", Vector3(5.06, 1.04, -26.2))
+	ProductionKit.add_visual(self, "electrical_cabinet", Vector3(3.6, 1.1, -9.0))
+	ProductionKit.add_visual(self, "generator_control_unit", Vector3(-3.2, 1.02, -34.7))
+	ProductionKit.add_visual(self, "warning_sign_frame", Vector3(0, 2.23, -51.74))
 
 func _exit_tree() -> void:
 	for zone in audio_zones.values():
@@ -46,6 +89,10 @@ func _build_shell() -> void:
 	_box("ChapterEndWall", Vector3(0, 1.7, -62.45), Vector3(12, 3.4, 0.3), concrete, true)
 	_box("MaintenanceGrating", Vector3(0, 0.16, -30.0), Vector3(3.7, 0.035, 7.0), metal, false)
 	_box("AirlockFloor", Vector3(0, 0.16, -55.0), Vector3(2.7, 0.04, 5.4), metal, false)
+	for side in [-1.0, 1.0]:
+		_box("AirlockSideWall", Vector3(side * 1.55, 1.7, -55.0), Vector3(0.22, 3.4, 5.7), bare, true)
+		_box("AirlockServiceChannel", Vector3(side * 1.28, 2.83, -55.0), Vector3(0.18, 0.16, 5.4), metal, false)
+	_box("AirlockCeilingCassette", Vector3(0, 3.17, -55.0), Vector3(2.8, 0.23, 5.55), metal, false)
 
 func _partition(x: float, from_z: float, to_z: float) -> void:
 	var center := (from_z + to_z) * 0.5
@@ -91,9 +138,9 @@ func _build_task_stations() -> void:
 	var security_breaker := CircuitBreaker.new(); security_breaker.name = "SecurityBreaker"; security_breaker.stable_id = &"security_breaker"; security_breaker.circuit_id = &"security"; security_breaker.interaction_name = "CCTV circuit breaker"; security_breaker.position = Vector3(4.1, 1.0, -24.1); _add_interactable(security_breaker, Vector3(0.28, 0.72, 0.2), metal)
 	var door_breaker := CircuitBreaker.new(); door_breaker.name = "DoorBreaker"; door_breaker.stable_id = &"door_breaker"; door_breaker.circuit_id = &"door_controls"; door_breaker.interaction_name = "Door control breaker"; door_breaker.position = Vector3(4.55, 1.0, -24.1); _add_interactable(door_breaker, Vector3(0.28, 0.72, 0.2), metal)
 	var hatch := TransferHatch.new(); hatch.name = "TransferHatch"; hatch.stable_id = &"transfer_hatch"; hatch.interaction_name = "Transfer hatch"; hatch.position = Vector3(4.3, 0.95, -44.0); _add_interactable(hatch, Vector3(1.18, 0.8, 0.52), metal)
-	var generator := FacilityActionPoint.new(); generator.name = "GeneratorStarter"; generator.stable_id = &"generator_starter"; generator.action_id = &"start_generator"; generator.interaction_name = "Generator starter"; generator.position = Vector3(-3.15, 1.0, -34.8); _add_interactable(generator, Vector3(0.8, 1.25, 0.42), metal)
+	var generator := FacilityActionPoint.new(); generator.name = "GeneratorStarter"; generator.stable_id = &"generator_starter"; generator.action_id = &"start_generator"; generator.interaction_duration = 0.65; generator.interaction_name = "Generator starter"; generator.position = Vector3(-3.15, 1.0, -34.8); _add_interactable(generator, Vector3(0.8, 1.25, 0.42), metal)
 	var comms := FacilityActionPoint.new(); comms.name = "CommsPanel"; comms.stable_id = &"comms_panel"; comms.action_id = &"test_link"; comms.interaction_name = "Test remote link"; comms.position = Vector3(0.0, 1.0, -48.5); _add_interactable(comms, Vector3(0.85, 1.0, 0.38), metal)
-	var control := AirlockControl.new(); control.name = "AirlockControl"; control.stable_id = &"airlock_control"; control.interaction_name = "Airlock cycle control"; control.position = Vector3(1.75, 1.1, -54.0); _add_interactable(control, Vector3(0.48, 0.68, 0.28), metal)
+	var control := AirlockControl.new(); control.name = "AirlockControl"; control.stable_id = &"airlock_control"; control.interaction_name = "Airlock cycle control"; control.interaction_duration = 0.8; control.position = Vector3(1.08, 1.1, -54.0); _add_interactable(control, Vector3(0.48, 0.68, 0.28), metal)
 	var inner := _door("AirlockInnerDoor", &"airlock_inner", -52.0)
 	var outer := _door("AirlockOuterDoor", &"airlock_outer", -58.0)
 	objects[&"airlock_inner"] = inner; objects[&"airlock_outer"] = outer
@@ -105,14 +152,14 @@ func _build_task_stations() -> void:
 
 func _build_lighting() -> void:
 	for fixture in [
-		{"z": -17.8, "color": Color(0.62, 0.72, 0.72), "energy": 3.4},
-		{"z": -23.2, "color": Color(0.55, 0.7, 0.63), "energy": 3.6},
-		{"z": -29.5, "color": Color(0.52, 0.58, 0.56), "energy": 2.4},
-		{"z": -36.0, "color": Color(0.92, 0.75, 0.53), "energy": 3.5},
-		{"z": -41.0, "color": Color(0.6, 0.69, 0.69), "energy": 2.8},
-		{"z": -44.5, "color": Color(0.78, 0.82, 0.73), "energy": 3.3},
-		{"z": -48.5, "color": Color(0.58, 0.73, 0.66), "energy": 3.2},
-		{"z": -54.5, "color": Color(0.69, 0.78, 0.82), "energy": 3.0}
+		{"z": -17.8, "color": Color(0.62, 0.72, 0.72), "energy": 0.85},
+		{"z": -23.2, "color": Color(0.55, 0.7, 0.63), "energy": 0.9},
+		{"z": -29.5, "color": Color(0.52, 0.58, 0.56), "energy": 1.2},
+		{"z": -36.0, "color": Color(0.92, 0.75, 0.53), "energy": 0.9},
+		{"z": -41.0, "color": Color(0.6, 0.69, 0.69), "energy": 0.75},
+		{"z": -44.5, "color": Color(0.78, 0.82, 0.73), "energy": 0.85},
+		{"z": -48.5, "color": Color(0.58, 0.73, 0.66), "energy": 0.8},
+		{"z": -54.5, "color": Color(0.69, 0.78, 0.82), "energy": 1.4}
 	]:
 		var practical := OmniLight3D.new()
 		practical.name = "PracticalCeilingLight"
@@ -120,20 +167,20 @@ func _build_lighting() -> void:
 		practical.light_color = fixture.color
 		practical.light_energy = fixture.energy
 		practical.omni_range = 7.2
-		practical.shadow_enabled = false
+		practical.shadow_enabled = fixture.z in [-23.2, -36.0, -54.5]
 		add_child(practical)
 	for zone in [
-		{"id": "storage", "position": Vector3(-4.4, 2.8, -18), "color": Color(0.42, 0.52, 0.55), "energy": 1.8},
-		{"id": "security", "position": Vector3(4.3, 2.8, -23), "color": Color(0.4, 0.65, 0.55), "energy": 1.7},
+		{"id": "storage", "position": Vector3(-4.4, 2.8, -18), "color": Color(0.42, 0.52, 0.55), "energy": 0.9},
+		{"id": "security", "position": Vector3(4.3, 2.8, -23), "color": Color(0.4, 0.65, 0.55), "energy": 0.85},
 		{"id": "maintenance", "position": Vector3(0, 2.8, -30), "color": Color(0.45, 0.51, 0.48), "energy": 1.2},
-		{"id": "generator", "position": Vector3(-4.3, 2.8, -36), "color": Color(0.9, 0.69, 0.44), "energy": 2.1},
-		{"id": "observation", "position": Vector3(0, 2.8, -41), "color": Color(0.5, 0.63, 0.67), "energy": 1.6},
-		{"id": "transfer", "position": Vector3(4.3, 2.8, -44), "color": Color(0.72, 0.74, 0.66), "energy": 1.7},
-		{"id": "communications", "position": Vector3(0, 2.8, -49), "color": Color(0.42, 0.64, 0.57), "energy": 1.8},
-		{"id": "airlock", "position": Vector3(0, 2.8, -55), "color": Color(0.64, 0.74, 0.8), "energy": 1.5}
+		{"id": "generator", "position": Vector3(-4.3, 2.8, -36), "color": Color(0.9, 0.69, 0.44), "energy": 1.2},
+		{"id": "observation", "position": Vector3(0, 2.8, -41), "color": Color(0.5, 0.63, 0.67), "energy": 0.8},
+		{"id": "transfer", "position": Vector3(4.3, 2.8, -44), "color": Color(0.72, 0.74, 0.66), "energy": 0.85},
+		{"id": "communications", "position": Vector3(0, 2.8, -49), "color": Color(0.42, 0.64, 0.57), "energy": 0.9},
+		{"id": "airlock", "position": Vector3(0, 2.8, -55), "color": Color(0.64, 0.74, 0.8), "energy": 0.75}
 	]:
 		var light := OmniLight3D.new(); light.name = "%sLight" % zone.id; light.position = zone.position; light.light_color = zone.color; light.light_energy = zone.energy; light.omni_range = 6.5; light.shadow_enabled = zone.id in ["generator", "airlock"]; add_child(light); lights[zone.id] = light
-		var ambience := AudioStreamPlayer3D.new(); ambience.name = "%sHum" % zone.id; ambience.position = zone.position - Vector3(0, 1.5, 0); ambience.max_distance = 12.0; ambience.volume_db = -32.0 if zone.id in ["observation", "airlock"] else -27.0; ambience.stream = FacilitySoundLibrary.hum(48.0 if zone.id == "generator" else (60.0 if zone.id == "security" else 50.0)); ambience.bus = "Ambience"; add_child(ambience); audio_zones[zone.id] = ambience
+		var ambience := AudioStreamPlayer3D.new(); ambience.name = "%sHum" % zone.id; ambience.position = zone.position - Vector3(0, 1.5, 0); ambience.max_distance = 12.0; ambience.volume_db = -32.0 if zone.id in ["observation", "airlock"] else -27.0; ambience.stream = FacilitySoundLibrary.ambience(zone.id); ambience.bus = "Ambience"; add_child(ambience); audio_zones[zone.id] = ambience
 		if zone.id != "generator" and DisplayServer.get_name() != "headless": ambience.play()
 
 func _build_room_props() -> void:
@@ -176,6 +223,11 @@ func _build_room_props() -> void:
 		for z in [-52.0, -58.0]:
 			_box("AirlockGasket", Vector3(x, 1.4, z + 0.14), Vector3(0.09, 2.8, 0.08), rubber, false)
 			_box("AirlockGuard", Vector3(x * 1.25, 0.85, z + 0.6), Vector3(0.07, 1.45, 0.08), hazard, false)
+	for side in [-1.0, 1.0]:
+		_box("AirlockWallBaseRail", Vector3(side * 1.18, 0.36, -55.0), Vector3(0.07, 0.18, 5.55), metal, false)
+		_box("AirlockWallTopRail", Vector3(side * 1.18, 2.68, -55.0), Vector3(0.07, 0.08, 5.55), metal, false)
+		for z in [-53.45, -55.0, -56.55]:
+			_box("AirlockWallRib", Vector3(side * 1.17, 1.48, z), Vector3(0.09, 2.3, 0.08), metal, false)
 	for z in [-53.0, -54.0, -55.0, -56.0, -57.0]:
 		_box("AirlockFloorGrip", Vector3(0, 0.195, z), Vector3(2.5, 0.01, 0.05), rubber, false)
 		_box("AirlockCeilingRail", Vector3(0, 3.23, z), Vector3(2.6, 0.1, 0.1), metal, false)
@@ -214,6 +266,11 @@ func _cylinder(node_name: String, position: Vector3, radius: float, length: floa
 
 func _add_interactable(node: Interactable, size: Vector3, material: Material) -> void:
 	var mesh := MeshInstance3D.new(); mesh.name = "BodyMesh"; var box_mesh := BoxMesh.new(); box_mesh.size = size; mesh.mesh = box_mesh; mesh.material_override = material; node.add_child(mesh)
+	var visual_names := {"camera_console": "security_console", "transfer_hatch": "transfer_hatch", "generator_starter": "generator_control_unit", "airlock_control": "breaker_panel"}
+	var visual_name: String = visual_names.get(String(node.stable_id), "")
+	if not visual_name.is_empty():
+		mesh.visible = false
+		ProductionKit.add_visual(node, visual_name)
 	var collider := CollisionShape3D.new(); collider.name = "Collision"; var shape := BoxShape3D.new(); shape.size = size; collider.shape = shape; node.add_child(collider)
 	var audio := FacilityAudioEmitter.new(); audio.name = "Audio"; audio.max_distance = 7.0; audio.interaction_volume_db = -14.0; node.add_child(audio)
 	add_child(node)
@@ -221,8 +278,10 @@ func _add_interactable(node: Interactable, size: Vector3, material: Material) ->
 
 func _door(node_name: String, id: StringName, z: float) -> ElectronicDoor:
 	var door := ElectronicDoor.new(); door.name = node_name; door.stable_id = id; door.interaction_name = "Airlock bulkhead"; door.position = Vector3(-1.3, 1.35, z); door.open_angle = -96.0
-	var mesh := MeshInstance3D.new(); mesh.name = "DoorLeaf"; mesh.position = Vector3(1.3, 0, 0); var shape := BoxMesh.new(); shape.size = Vector3(2.6, 2.7, 0.18); mesh.mesh = shape; mesh.material_override = metal; door.add_child(mesh)
+	var mesh := MeshInstance3D.new(); mesh.name = "DoorLeaf"; mesh.position = Vector3(1.3, 0, 0); var shape := BoxMesh.new(); shape.size = Vector3(2.6, 2.7, 0.18); mesh.mesh = shape; mesh.material_override = metal; mesh.visible = false; door.add_child(mesh)
+	ProductionKit.add_visual(door, "airlock_door", mesh.position)
 	var collider := CollisionShape3D.new(); collider.name = "Collision"; collider.position = mesh.position; var collision_shape := BoxShape3D.new(); collision_shape.size = shape.size; collider.shape = collision_shape; door.add_child(collider)
+	var audio := FacilityAudioEmitter.new(); audio.name = "Audio"; audio.max_distance = 15.0; audio.interaction_volume_db = -12.0; door.add_child(audio)
 	add_child(door)
 	return door
 

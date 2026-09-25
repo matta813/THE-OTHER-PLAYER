@@ -5,9 +5,9 @@ var clock := 0.0
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	camera = Camera3D.new(); camera.position = Vector3(0.8, 1.7, 5.7); camera.rotation.y = -0.14; add_child(camera); camera.current = true
+	camera = Camera3D.new(); camera.position = Vector3(-2.3, 1.68, -1.0); camera.rotation.y = -0.08; add_child(camera); camera.current = true
 	var environment := WorldEnvironment.new(); add_child(environment)
-	var tone := Environment.new(); tone.background_mode = Environment.BG_COLOR; tone.background_color = Color(0.005, 0.011, 0.014); tone.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR; tone.ambient_light_color = Color(0.07, 0.12, 0.13); tone.ambient_light_energy = 0.24; tone.fog_enabled = true; tone.fog_density = 0.022; environment.environment = tone
+	var tone := Environment.new(); tone.background_mode = Environment.BG_COLOR; tone.background_color = Color(0.005, 0.011, 0.014); tone.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR; tone.ambient_light_color = Color(0.07, 0.12, 0.13); tone.ambient_light_energy = 0.24; tone.fog_enabled = true; tone.fog_density = 0.012; environment.environment = tone
 	_box(Vector3(0, -0.1, -2), Vector3(8, 0.2, 17), Color(0.11, 0.15, 0.16))
 	_box(Vector3(0, 3.4, -2), Vector3(8, 0.2, 17), Color(0.08, 0.11, 0.12))
 	for side in [-1, 1]:
@@ -19,8 +19,16 @@ func _ready() -> void:
 	for z in [-5.5, -1.0, 3.5]:
 		_box(Vector3(0, 3.23, z), Vector3(1.8, 0.05, 0.32), Color(0.45, 0.6, 0.55), true)
 		var light := OmniLight3D.new(); light.position = Vector3(0, 3.05, z); light.light_color = Color(0.47, 0.68, 0.62); light.light_energy = 0.55; light.omni_range = 5; add_child(light)
+	for side in [-1.0, 1.0]:
+		for i in range(6):
+			ProductionKit.add_visual(self, "wall_section", Vector3(side * 3.85, 1.6, 3.4 - i * 2.4), Vector3(0, -side * PI * 0.5, 0))
+	ProductionKit.add_visual(self, "industrial_door", Vector3(0, 1.38, -9.32))
+	ProductionKit.add_visual(self, "door_frame", Vector3(0, 1.52, -9.3))
+	ProductionKit.add_visual(self, "terminal_housing", Vector3(2.55, 1.02, -6.4))
+	ProductionKit.add_visual(self, "industrial_light", Vector3(0, 3.2, -5.5))
+	var far_light := OmniLight3D.new(); far_light.position = Vector3(0, 2.8, -8.35); far_light.light_color = Color(0.54, 0.68, 0.61); far_light.light_energy = 0.95; far_light.omni_range = 4.2; far_light.shadow_enabled = true; add_child(far_light)
 	GameSettings.apply_environment(tone)
-	var hum := AudioStreamPlayer.new(); hum.name = "DistantVentilation"; hum.bus = "Ambience"; hum.volume_db = -32.0; hum.stream = FacilitySoundLibrary.hum(47.0); add_child(hum)
+	var hum := AudioStreamPlayer.new(); hum.name = "DistantVentilation"; hum.bus = "Ambience"; hum.volume_db = -32.0; hum.stream = FacilitySoundLibrary.ambience("maintenance"); add_child(hum)
 	if DisplayServer.get_name() != "headless": hum.play()
 
 func _box(pos: Vector3, size: Vector3, color: Color, emissive := false) -> void:
@@ -31,4 +39,4 @@ func _box(pos: Vector3, size: Vector3, color: Color, emissive := false) -> void:
 
 func _process(delta: float) -> void:
 	clock += delta
-	if camera: camera.rotation.y = -0.14 + sin(clock * 0.13) * 0.012
+	if camera: camera.rotation.y = -0.08 + sin(clock * 0.13) * 0.012

@@ -11,6 +11,7 @@ var binding_action := ""
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	theme = FacilityUITheme.create()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var shade := ColorRect.new()
@@ -19,18 +20,18 @@ func _ready() -> void:
 	add_child(shade)
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 80)
+	margin.add_theme_constant_override("margin_left", 74)
 	margin.add_theme_constant_override("margin_top", 66)
 	margin.add_theme_constant_override("margin_right", 80)
 	margin.add_theme_constant_override("margin_bottom", 52)
 	add_child(margin)
 	var frame := HBoxContainer.new(); margin.add_child(frame)
-	var column := VBoxContainer.new(); column.custom_minimum_size.x = 430; frame.add_child(column)
+	var column := VBoxContainer.new(); column.custom_minimum_size.x = 452; frame.add_child(column)
 	var eyebrow := _label("FACILITY LINK  /  01", 13, Color(0.43, 0.72, 0.6)); column.add_child(eyebrow)
 	column.add_child(_spacer(22))
 	heading = _label(ReleaseInfo.TITLE, 39, Color(0.86, 0.91, 0.87)); column.add_child(heading)
-	column.add_child(_spacer(30))
-	content = VBoxContainer.new(); content.add_theme_constant_override("separation", 7); column.add_child(content)
+	column.add_child(_spacer(33))
+	content = VBoxContainer.new(); content.add_theme_constant_override("separation", 8); column.add_child(content)
 	column.add_spacer(false)
 	info = _label("", 14, Color(0.72, 0.81, 0.77)); column.add_child(info)
 	column.add_child(_spacer(12))
@@ -45,7 +46,7 @@ func _spacer(height: float) -> Control:
 	var node := Control.new(); node.custom_minimum_size.y = height; return node
 
 func _button(label: String, action: Callable) -> Button:
-	var button := Button.new(); button.text = label; button.custom_minimum_size = Vector2(350, 39); button.alignment = HORIZONTAL_ALIGNMENT_LEFT; button.focus_mode = Control.FOCUS_ALL
+	var button := Button.new(); button.text = label; button.custom_minimum_size = Vector2(405, 44); button.alignment = HORIZONTAL_ALIGNMENT_LEFT; button.focus_mode = Control.FOCUS_ALL
 	button.add_theme_color_override("font_color", Color(0.77, 0.88, 0.82))
 	button.pressed.connect(action)
 	content.add_child(button)
@@ -177,12 +178,15 @@ func _show_settings(category: String) -> void:
 			_toggle(rows, "Subtitles", "subtitles")
 			_toggle(rows, "Toggle sprint", "sprint_toggle")
 			_toggle(rows, "Toggle crouch", "crouch_toggle")
+			_toggle(rows, "Toggle timed interactions", "interaction_toggle")
 		"ACCESSIBILITY":
 			_toggle(rows, "Subtitles", "subtitles")
 			_slider(rows, "Subtitle size", "subtitle_size", 16, 32, 1)
 			_toggle(rows, "High contrast prompt", "high_contrast_prompt")
 			_slider(rows, "Camera bob", "camera_bob", 0, 1, 0.1)
 			_toggle(rows, "Reduce motion", "reduce_motion")
+			_toggle(rows, "Reduce flashing", "reduce_flashing")
+			_toggle(rows, "Toggle timed interactions", "interaction_toggle")
 	_button("BACK", _show_home)
 
 func _toggle(parent: Node, label: String, key: String) -> void:

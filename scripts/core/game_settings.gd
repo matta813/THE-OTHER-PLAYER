@@ -13,7 +13,7 @@ const DEFAULTS := {
 	"mouse_sensitivity": 0.0019, "invert_y": false, "sprint_toggle": false,
 	"crouch_toggle": false, "subtitles": true, "subtitle_size": 20,
 	"high_contrast_prompt": false, "camera_bob": 0.6,
-	"reduce_motion": false
+	"reduce_motion": false, "interaction_toggle": false, "reduce_flashing": false
 }
 const RESOLUTIONS := [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]
 var values: Dictionary = DEFAULTS.duplicate(true)

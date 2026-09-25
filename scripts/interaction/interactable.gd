@@ -7,6 +7,7 @@ func _ready() -> void: collision_layer = 2; GameRuntime.register(stable_id, self
 func _exit_tree() -> void: GameRuntime.unregister(stable_id, self)
 func can_interact(_actor: Node) -> bool: return available
 func prompt_text(actor: Node) -> String: return "[E] %s" % interaction_name if can_interact(actor) else unavailable_reason
+func required_hold_duration() -> float: return maxf(interaction_duration, 0.0)
 func interact(actor: Node) -> bool:
 	if not can_interact(actor): _unavailable(actor); return false
 	var audio := get_node_or_null("Audio") as FacilityAudioEmitter

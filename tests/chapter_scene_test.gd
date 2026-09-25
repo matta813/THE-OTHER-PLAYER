@@ -89,7 +89,7 @@ func _ready() -> void:
 	check(not ray(Vector3(0, 1.2, -57.0), Vector3(0, 1.2, -59.0), 2).is_empty(), "outer door physically blocks passage before cycle")
 	for duration in [1.1, 1.9, 4.6, 2.1]: chapter.airlock._process(duration)
 	check(chapter.airlock.phase == AirlockSystem.Phase.OPEN and not (wing.object(&"airlock_outer") as ElectronicDoor).locked, "airlock seals, pressurizes, and opens in order")
-	for frame in 40: await get_tree().process_frame
+	for frame in 120: await get_tree().process_frame
 	check(ray(Vector3(0, 1.2, -57.0), Vector3(0, 1.2, -59.0), 2).is_empty(), "opened outer door clears physical route")
 	player.global_position = Vector3(0, 1, -60)
 	await get_tree().process_frame

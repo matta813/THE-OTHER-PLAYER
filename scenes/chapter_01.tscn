@@ -37,18 +37,18 @@ background_mode=1
 background_color=Color(0.005,0.008,0.01,1)
 ambient_light_source=3
 ambient_light_color=Color(0.2,0.23,0.22,1)
-ambient_light_energy=0.48
+ambient_light_energy=0.28
 fog_enabled=true
 fog_light_color=Color(0.12,0.16,0.17,1)
-fog_density=0.012
+fog_density=0.008
 volumetric_fog_enabled=true
-volumetric_fog_density=0.006
+volumetric_fog_density=0.003
 volumetric_fog_length=18.0
 tonemap_mode=2
-tonemap_exposure=1.05
+tonemap_exposure=0.88
 ssao_enabled=true
 ssao_radius=1.1
-ssao_intensity=1.2
+ssao_intensity=0.95
 [sub_resource type="StandardMaterial3D" id="IndicatorGreen"]
 albedo_color=Color(0.02,0.16,0.06,1)
 emission_enabled=true
@@ -262,7 +262,7 @@ light_color=Color(0.72,0.82,0.78,1)
 [node name="EntranceLight" type="OmniLight3D" parent="."]
 position=Vector3(0,3,3)
 light_color=Color(0.55,0.68,0.72,1)
-light_energy=4.0
+light_energy=2.3
 omni_range=8.0
 shadow_enabled=true
 [node name="CorridorEmergencyLight" type="OmniLight3D" parent="."]
@@ -274,7 +274,7 @@ shadow_enabled=true
 [node name="RoomBBackupLight" type="OmniLight3D" parent="."]
 position=Vector3(0,2.65,-10)
 light_color=Color(0.28,0.4,0.42,1)
-light_energy=1.5
+light_energy=0.8
 omni_range=6.0
 [node name="SwitchLocatorLight" type="OmniLight3D" parent="."]
 position=Vector3(2.65,1.8,-9.0)

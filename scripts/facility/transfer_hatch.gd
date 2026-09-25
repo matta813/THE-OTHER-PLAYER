@@ -10,6 +10,29 @@ signal item_collected(item_id: StringName)
 enum HatchState {EMPTY, LOADED, TRANSIT, RETURN_READY}
 var hatch_state := HatchState.EMPTY
 var item_id: StringName = &""
+var leaf: Node3D
+var latch: Node3D
+var leaf_closed_y := 0.0
+var latch_home_rotation := 0.0
+var visual_tween: Tween
+
+func _ready() -> void:
+	super._ready()
+	leaf = find_child("*HatchLeaf*", true, false) as Node3D
+	latch = find_child("*Latch*", true, false) as Node3D
+	if leaf: leaf_closed_y = leaf.position.y
+	if latch: latch_home_rotation = latch.rotation.z
+	state_changed.connect(_visual_state)
+	_visual_state()
+
+func _visual_state() -> void:
+	if leaf == null: return
+	if visual_tween and visual_tween.is_running(): visual_tween.kill()
+	var open := hatch_state in [HatchState.EMPTY, HatchState.RETURN_READY]
+	visual_tween = create_tween()
+	visual_tween.tween_property(leaf, "position:y", leaf_closed_y + (0.23 if open else 0.0), 0.42).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	if latch:
+		visual_tween.parallel().tween_property(latch, "rotation:z", latch_home_rotation + (0.0 if open else 0.35), 0.26)
 
 func _perform_interaction(actor: Node) -> void:
 	match hatch_state:
@@ -39,10 +62,18 @@ func remote_action(action: StringName, payload: Dictionary = {}) -> bool:
 	if action == &"receive" and hatch_state == HatchState.TRANSIT:
 		remote_received.emit(item_id)
 		GameRuntime.behaviour.record(&"item_transferred", global_position, stable_id, &"remote", -1.0, {"item_id": String(item_id)})
-		item_id = &""; state_changed.emit(); return true
+		item_id = &""; state_changed.emit()
+		var audio := get_node_or_null("Audio") as FacilityAudioEmitter
+		if audio: audio.play_remote()
+		return true
 	if action == &"return_item" and hatch_state == HatchState.TRANSIT:
-		item_id = StringName(payload.get("item_id", "")); hatch_state = HatchState.RETURN_READY; state_changed.emit(); return item_id != &""
+		item_id = StringName(payload.get("item_id", "")); hatch_state = HatchState.RETURN_READY; state_changed.emit()
+		var audio := get_node_or_null("Audio") as FacilityAudioEmitter
+		if audio: audio.play_remote()
+		return item_id != &""
 	return false
+
+func required_hold_duration() -> float: return 0.7 if hatch_state == HatchState.LOADED else 0.0
 
 func prompt_text(actor: Node) -> String:
 	match hatch_state:

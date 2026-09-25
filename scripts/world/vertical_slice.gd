@@ -23,9 +23,13 @@ var request_last_position := Vector3.ZERO
 var stationary_seconds := 0.0
 var wait_logged := false
 var subtitles: SubtitlePresenter
+var interaction_meter: ProgressBar
+var terminal_header: Label
 
 func _ready() -> void:
 	player.focus_changed.connect(func(value: String) -> void: prompt.text = value)
+	player.interaction_progress.connect(_interaction_progress)
+	_build_ui_chrome()
 	GameSettings.changed.connect(_apply_settings)
 	_apply_settings()
 	subtitles = SubtitlePresenter.new(); add_child(subtitles)
@@ -40,10 +44,50 @@ func _ready() -> void:
 	$Terminal.history.clear()
 	$Terminal.append_line("FACILITY LINK // NODE 02")
 	$Terminal.append_line("STATUS: SEARCHING FOR PEER...")
+	_install_production_kit()
 	if not GameFlow.pending_save.is_empty():
 		if SaveSystem.load_from(GameFlow.pending_save, player): _restore_visual_state()
 		else: _status("SAVE COULD NOT BE LOADED")
 		GameFlow.pending_save = ""
+
+func _build_ui_chrome() -> void:
+	interaction_meter = ProgressBar.new()
+	interaction_meter.name = "InteractionMeter"
+	interaction_meter.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	interaction_meter.position = Vector2(-105, -36)
+	interaction_meter.custom_minimum_size = Vector2(210, 4)
+	interaction_meter.show_percentage = false
+	interaction_meter.max_value = 1.0
+	var track := StyleBoxFlat.new(); track.bg_color = Color(0.04, 0.08, 0.08, 0.85)
+	var fill := StyleBoxFlat.new(); fill.bg_color = Color(0.45, 0.78, 0.59)
+	interaction_meter.add_theme_stylebox_override("background", track)
+	interaction_meter.add_theme_stylebox_override("fill", fill)
+	interaction_meter.visible = false
+	$UI.add_child(interaction_meter)
+	terminal_header = Label.new()
+	terminal_header.name = "Header"
+	terminal_header.text = "FACILITY LINK   /   NODE 02                         ● CONNECTED"
+	terminal_header.position = Vector2(22, 8)
+	terminal_header.add_theme_font_size_override("font_size", 11)
+	terminal_header.add_theme_color_override("font_color", Color(0.46, 0.72, 0.58))
+	terminal_panel.add_child(terminal_header)
+	message.position.y = 40
+	message.size.y = 191
+
+func _interaction_progress(progress: float) -> void:
+	interaction_meter.visible = progress > 0.0
+	interaction_meter.value = progress
+
+func _install_production_kit() -> void:
+	for child in $Door.get_children():
+		if child is MeshInstance3D or child is Label3D: child.visible = false
+	ProductionKit.add_visual($Door, "industrial_door", Vector3(1.22, 0, 0))
+	for child in $Terminal.get_children():
+		if child is MeshInstance3D and child.name in ["Mesh", "ScreenHood"]: child.visible = false
+	ProductionKit.add_visual($Terminal, "terminal_housing")
+	ProductionKit.add_visual(self, "door_frame", Vector3(0, 1.52, -1.88))
+	ProductionKit.add_visual(self, "breaker_panel", Vector3(2.8, 1.15, -8.91), Vector3.ZERO, Vector3(0.55, 1.0, 0.55))
+	for z in [3.0, -4.8, -9.5]: ProductionKit.add_visual(self, "industrial_light", Vector3(0, 3.19, z))
 
 func _apply_settings() -> void:
 	GameSettings.apply_environment($Environment.environment)
@@ -125,7 +169,7 @@ func _other_action(action: StringName, target: StringName, payload: Dictionary) 
 	if action == &"light_on" and target == &"room_b_light":
 		if $PowerSwitch.powered: return
 		$RoomLight.visible = true
-		$RoomLight.light_energy = 4.0
+		$RoomLight.light_energy = 2.0
 		$FacilityDetails.set_east_power(true)
 		GameRuntime.other_player.memory.anticipated_light = true
 		GameRuntime.trust_strategy.record_help(GameRuntime.trust, GameRuntime.suspicion, GameRuntime.expectations, Time.get_unix_time_from_system(), false)
@@ -182,7 +226,7 @@ func _power(on: bool) -> void:
 	if not on: return
 	GameRuntime.other_player.cancel_action(&"light_on", &"room_b_light")
 	$RoomLight.visible = true
-	$RoomLight.light_energy = 5.0
+	$RoomLight.light_energy = 2.7
 	$FacilityDetails.set_east_power(true)
 	$MachineryIndicator.visible = true
 	GameRuntime.story_stage = 4
@@ -220,7 +264,7 @@ func _on_status_timer_timeout() -> void: $UI/Status.text = ""
 
 func _restore_visual_state() -> void:
 	$RoomLight.visible = $PowerSwitch.powered or bool(GameRuntime.other_player.memory.get("anticipated_light", false))
-	$RoomLight.light_energy = 5.0 if $PowerSwitch.powered else 4.0
+	$RoomLight.light_energy = 2.7 if $PowerSwitch.powered else 4.0
 	$FacilityDetails.set_east_power($RoomLight.visible)
 	$MachineryIndicator.visible = $PowerSwitch.powered
 	$DoorIndicator.light_color = Color(0.2, 1.0, 0.45) if not $Door.locked else Color(1.0, 0.16, 0.1)
