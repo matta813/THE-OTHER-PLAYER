@@ -32,6 +32,7 @@ func _ready() -> void:
 	for surface in [&"concrete", &"metal", &"grating"]:
 		step_streams[surface] = [FacilitySoundLibrary.step(surface, 0), FacilitySoundLibrary.step(surface, 1), FacilitySoundLibrary.step(surface, 2)]
 	previous_step_position = global_position
+	GameSettings.changed.connect(_refresh_prompt)
 func has_carried_item() -> bool: return carried_item_id != &""
 func give_item(item_id: StringName) -> bool:
 	if item_id == &"" or has_carried_item(): return false
@@ -114,7 +115,14 @@ func _update_focus() -> void:
 	if candidate != focused:
 		_clear_hold()
 		if is_instance_valid(focused) and focused.state_changed.is_connected(_refresh_prompt): focused.state_changed.disconnect(_refresh_prompt)
-		focused = candidate; focus_changed.emit(focused.prompt_text(self) if focused else "")
+		focused = candidate; focus_changed.emit(_focused_prompt())
 		if is_instance_valid(focused): focused.state_changed.connect(_refresh_prompt)
+func _focused_prompt() -> String:
+	if not is_instance_valid(focused): return ""
+	var value := focused.prompt_text(self)
+	if focused.required_hold_duration() > 0.0 and value.begins_with("[E]"):
+		return value.replace("[E]", "[E TO START]" if GameSettings.get_value("interaction_toggle") else "[HOLD E]")
+	return value
+
 func _refresh_prompt() -> void:
-	if is_instance_valid(focused): focus_changed.emit(focused.prompt_text(self))
+	focus_changed.emit(_focused_prompt())

@@ -98,14 +98,16 @@ def pipe(suffix, start, end, radius=0.04, material="galvanised", vertices=12):
     return obj
 
 
-def text(suffix, content, pos, size=0.08, material="label", rotation=(math.pi/2,0,0)):
+def text(suffix, content, pos, size=0.08, material="label", rotation=(math.pi/2,0,math.pi)):
     bpy.ops.object.text_add(location=pos, rotation=rotation)
     obj = bpy.context.object
     obj.data.body = content
     obj.data.size = size
     obj.data.extrude = 0.0005
     bpy.ops.object.convert(target="MESH")
-    return add(bpy.context.object, suffix, material)
+    obj = bpy.context.object
+    obj.location.x += obj.dimensions.x
+    return add(obj, suffix, material)
 
 
 def bolts(prefix, xs, ys, front, radius=0.016):
@@ -308,6 +310,47 @@ for i,x in enumerate([-.26,0,.26]):
     cylinder("control_%s"%i,(x,.36,-.22),.07,.045,"brushed_metal",16,rotation=(math.pi/2,0,0))
     cylinder("indicator_%s"%i,(x,.345,.1),.025,.02,"indicator_green" if i==0 else "indicator_red",12,rotation=(math.pi/2,0,0))
 text("id","CONTACTOR / REMOTE",(-.37,.32,.51),.044)
+
+begin("generator_unit", "props", [2.65, 3.05, 2.25])
+# Skid-mounted alternator with separate end bells, cooling, conduit and inspection access.
+for x in [-1.13,1.13]:
+    box("skid_%s"%x,(x,0,-0.94),(.17,2.94,.20),"dark_steel",.010)
+    for y in [-1.16,1.16]: box("mount_%s_%s"%(x,y),(x,y,-.81),(.28,.34,.12),"brushed_metal",.008)
+box("foundation",(0,0,-.80),(2.5,2.84,.22),"painted_steel",.018)
+cylinder("stator",(0,0,.02),.66,2.22,"painted_steel",32,rotation=(math.pi/2,0,0))
+for y in [-1.08,-.86,.86,1.08]:
+    cylinder("stator_band_%s"%y,(0,y,.02),.72,.09,"galvanised",32,rotation=(math.pi/2,0,0))
+for y in [-1.27,1.27]:
+    cylinder("end_bell_%s"%y,(0,y,.02),.53,.28,"dark_steel",32,rotation=(math.pi/2,0,0))
+    cylinder("bearing_cover_%s"%y,(0,y*1.11,.02),.24,.065,"brushed_metal",24,rotation=(math.pi/2,0,0))
+    for angle in [0,math.pi/2,math.pi,3*math.pi/2]:
+        x,z=.39*math.cos(angle),.02+.39*math.sin(angle)
+        cylinder("end_fastener_%s_%s"%(y,angle),(x,y*1.12,z),.025,.03,"stainless",10,rotation=(math.pi/2,0,0))
+for y in [-.68,-.42,-.16,.10,.36,.62]:
+    box("cooling_fin_%s"%y,(0,y,.76),(1.45,.055,.26),"galvanised",.006)
+box("duct_chest",(0,0,.93),(1.48,1.66,.23),"dark_steel",.015)
+for x in [-.6,.6]: box("duct_edge_%s"%x,(x,0,1.08),(.055,1.52,.05),"brushed_metal",.005)
+box("terminal_box",(1.00,-.12,.42),(.42,.88,.61),"dark_steel",.016)
+box("terminal_lid",(1.23,-.12,.42),(.045,.78,.52),"painted_steel",.005)
+for y in [-.44,.20]:
+    cylinder("cable_gland_%s"%y,(1.16,y,.07),.07,.1,"rubber",16,rotation=(0,math.pi/2,0))
+box("service_plate",(-1.04,0,.25),(.05,1.16,.47),"galvanised",.008)
+for y in [-.46,.46]: box("inspection_latch_%s"%y,(-1.09,y,.27),(.05,.10,.08),"brushed_metal")
+text("rating","ALT 05 / 10 kW",(-.46,1.34,.80),.070)
+
+begin("airlock_cycle_panel", "props", [0.48,0.19,0.70])
+box("enclosure",(0,0,0),(.48,.19,.70),"dark_steel",.014)
+box("gasket",(0,.103,0),(.43,.025,.65),"rubber",.006)
+box("face",(0,.12,0),(.40,.02,.61),"painted_steel",.007)
+box("status_window",(0,.135,.18),(.33,.018,.14),"dirty_glass",.004)
+for x in [-.105,0,.105]:
+    box("window_segment_%s"%x,(x,.147,.18),(.065,.006,.045),"warning_paint",.002)
+cylinder("selector_bezel",(0,.15,-.06),.115,.035,"brushed_metal",24,rotation=(math.pi/2,0,0))
+cylinder("selector",(0,.18,-.06),.066,.08,"industrial_plastic",24,rotation=(math.pi/2,0,0))
+box("selector_grip",(0,.225,-.06),(.025,.018,.105),"galvanised",.005)
+for x in [-.15,.15]: cylinder("panel_fastener_%s"%x,(x,.14,-.27),.016,.012,"stainless",10,rotation=(math.pi/2,0,0))
+text("id","AIRLOCK / 07",(-.175,.145,.275),.036)
+text("cycle","CYCLE",(-.07,.145,-.265),.037)
 
 # Validate transforms/names, save editable source and export each collection as a deterministic GLB.
 invalid = []

@@ -49,7 +49,7 @@ func _install_production_kit() -> void:
 	for side in [-1.0, 1.0]:
 		for index in range(20):
 			var z := -15.2 - index * 2.4
-			ProductionKit.add_visual(self, "wall_section", Vector3(side * 5.80, 1.7, z), Vector3(0, -side * PI * 0.5, 0))
+			ProductionKit.add_visual(self, "wall_section", Vector3(side * 5.80, 1.7, z), Vector3(0, side * PI * 0.5, 0))
 		for z in [-18.0, -30.0, -42.0, -54.0]:
 			ProductionKit.add_visual(self, "cable_tray", Vector3(side * 5.45, 2.88, z))
 			ProductionKit.add_visual(self, "pipe_straight", Vector3(side * 5.48, 2.46, z))
@@ -57,7 +57,7 @@ func _install_production_kit() -> void:
 		ProductionKit.add_visual(self, "industrial_light", Vector3(0, 3.19, z))
 	for side in [-1.0, 1.0]:
 		for z in [-53.3, -55.6]:
-			ProductionKit.add_visual(self, "reinforced_wall", Vector3(side * 1.29, 1.7, z), Vector3(0, -side * PI * 0.5, 0))
+			ProductionKit.add_visual(self, "reinforced_wall", Vector3(side * 1.29, 1.7, z), Vector3(0, side * PI * 0.5, 0))
 		ProductionKit.add_visual(self, "pipe_straight", Vector3(side * 1.15, 2.55, -54.5))
 	for z in [-52.0, -58.0]:
 		ProductionKit.add_visual(self, "door_frame", Vector3(0, 1.48, z))
@@ -65,6 +65,10 @@ func _install_production_kit() -> void:
 	ProductionKit.add_visual(self, "equipment_rack", Vector3(5.06, 1.04, -26.2))
 	ProductionKit.add_visual(self, "electrical_cabinet", Vector3(3.6, 1.1, -9.0))
 	ProductionKit.add_visual(self, "generator_control_unit", Vector3(-3.2, 1.02, -34.7))
+	for child in get_children():
+		if child.name in ["GeneratorBed", "GeneratorRotor", "RotorBand", "GeneratorSupport", "CoolingFin"]:
+			(child as Node3D).visible = false
+	ProductionKit.add_visual(self, "generator_unit", Vector3(-4.55, 1.17, -37.1))
 	ProductionKit.add_visual(self, "warning_sign_frame", Vector3(0, 2.23, -51.74))
 
 func _exit_tree() -> void:
@@ -144,7 +148,7 @@ func _build_task_stations() -> void:
 	var inner := _door("AirlockInnerDoor", &"airlock_inner", -52.0)
 	var outer := _door("AirlockOuterDoor", &"airlock_outer", -58.0)
 	objects[&"airlock_inner"] = inner; objects[&"airlock_outer"] = outer
-	for position in [Vector3(4.7, 1.0, -22.2), Vector3(-4.7, 1.0, -35.0), Vector3(0, 1.0, -49.5)]:
+	for position in [Vector3(3.05, 1.0, -25.0), Vector3(-4.7, 1.0, -35.0), Vector3(0, 1.0, -49.5)]:
 		var terminal := FacilityTerminal.new(); terminal.name = "LinkTerminal"; terminal.stable_id = StringName("link_terminal_%d" % objects.size()); terminal.interaction_name = "Link terminal"; terminal.position = position
 		var screen := MeshInstance3D.new(); var screen_mesh := BoxMesh.new(); screen_mesh.size = Vector3(0.48, 0.38, 0.035); screen.mesh = screen_mesh; screen.material_override = glow; screen.position = Vector3(0, 0.2, 0.18); terminal.add_child(screen)
 		var text := Label3D.new(); text.name = "ScreenText"; text.position = Vector3(-0.21, 0.28, 0.205); text.font_size = 26; text.pixel_size = 0.0018; text.modulate = Color(0.52, 0.94, 0.69); terminal.add_child(text)
@@ -169,6 +173,22 @@ func _build_lighting() -> void:
 		practical.omni_range = 7.2
 		practical.shadow_enabled = fixture.z in [-23.2, -36.0, -54.5]
 		add_child(practical)
+	# Bench luminaires illuminate the two primary work surfaces without casting more shadows.
+	for station in [
+		{"id": "security", "position": Vector3(4.35, 2.95, -23.8), "color": Color(0.55, 0.73, 0.65)},
+		{"id": "generator", "position": Vector3(-4.50, 2.98, -37.1), "color": Color(0.95, 0.79, 0.58)}
+	]:
+		ProductionKit.add_visual(self, "industrial_light", station.position + Vector3(0, 0.20, 0))
+		var task_light := SpotLight3D.new()
+		task_light.name = "%sTaskLight" % station.id
+		task_light.position = station.position
+		task_light.rotation.x = -PI * 0.5
+		task_light.light_color = station.color
+		task_light.light_energy = 1.15
+		task_light.spot_range = 4.5
+		task_light.spot_angle = 45.0
+		task_light.shadow_enabled = false
+		add_child(task_light)
 	for zone in [
 		{"id": "storage", "position": Vector3(-4.4, 2.8, -18), "color": Color(0.42, 0.52, 0.55), "energy": 0.9},
 		{"id": "security", "position": Vector3(4.3, 2.8, -23), "color": Color(0.4, 0.65, 0.55), "energy": 0.85},
@@ -266,11 +286,11 @@ func _cylinder(node_name: String, position: Vector3, radius: float, length: floa
 
 func _add_interactable(node: Interactable, size: Vector3, material: Material) -> void:
 	var mesh := MeshInstance3D.new(); mesh.name = "BodyMesh"; var box_mesh := BoxMesh.new(); box_mesh.size = size; mesh.mesh = box_mesh; mesh.material_override = material; node.add_child(mesh)
-	var visual_names := {"camera_console": "security_console", "transfer_hatch": "transfer_hatch", "generator_starter": "generator_control_unit", "airlock_control": "breaker_panel"}
+	var visual_names := {"camera_console": "security_console", "transfer_hatch": "transfer_hatch", "generator_starter": "generator_control_unit", "airlock_control": "airlock_cycle_panel"}
 	var visual_name: String = visual_names.get(String(node.stable_id), "")
 	if not visual_name.is_empty():
 		mesh.visible = false
-		ProductionKit.add_visual(node, visual_name)
+		ProductionKit.add_visual(node, visual_name, Vector3.ZERO, Vector3(0, PI * 0.5, 0) if node.stable_id == &"airlock_control" else Vector3.ZERO)
 	var collider := CollisionShape3D.new(); collider.name = "Collision"; var shape := BoxShape3D.new(); shape.size = size; collider.shape = shape; node.add_child(collider)
 	var audio := FacilityAudioEmitter.new(); audio.name = "Audio"; audio.max_distance = 7.0; audio.interaction_volume_db = -14.0; node.add_child(audio)
 	add_child(node)

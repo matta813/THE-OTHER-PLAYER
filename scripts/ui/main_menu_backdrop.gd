@@ -21,7 +21,7 @@ func _ready() -> void:
 		var light := OmniLight3D.new(); light.position = Vector3(0, 3.05, z); light.light_color = Color(0.47, 0.68, 0.62); light.light_energy = 0.55; light.omni_range = 5; add_child(light)
 	for side in [-1.0, 1.0]:
 		for i in range(6):
-			ProductionKit.add_visual(self, "wall_section", Vector3(side * 3.85, 1.6, 3.4 - i * 2.4), Vector3(0, -side * PI * 0.5, 0))
+			ProductionKit.add_visual(self, "wall_section", Vector3(side * 3.85, 1.6, 3.4 - i * 2.4), Vector3(0, side * PI * 0.5, 0))
 	ProductionKit.add_visual(self, "industrial_door", Vector3(0, 1.38, -9.32))
 	ProductionKit.add_visual(self, "door_frame", Vector3(0, 1.52, -9.3))
 	ProductionKit.add_visual(self, "terminal_housing", Vector3(2.55, 1.02, -6.4))

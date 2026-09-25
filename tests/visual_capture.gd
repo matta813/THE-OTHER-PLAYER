@@ -28,11 +28,14 @@ func _capture() -> void:
 	var shots := [
 		["arrival.png", Vector3(0, 1.0, 5), 0.0],
 		["security.png", Vector3(0, 1.0, -22), -0.65],
-		["generator.png", Vector3(-1.0, 1.0, -35), -0.65],
+		["generator.png", Vector3(-1.0, 1.0, -35), 0.65],
 		["transfer.png", Vector3(1.0, 1.0, -43), -0.6],
 		["airlock.png", Vector3(0, 1.0, -54.5), 0.0],
 		["terminal_close.png", Vector3(-2.8, 1.0, 1.1), 0.0],
 		["security_close.png", Vector3(4.2, 1.0, -21.4), 0.0],
+		["generator_close.png", Vector3(-2.75, 1.0, -35.25), 0.55],
+		["airlock_wall.png", Vector3(0, 1.0, -54.5), -PI / 2.0],
+		["airlock_control.png", Vector3(0.0, 1.0, -54.0), -PI / 2.0],
 		["transfer_close.png", Vector3(4.3, 1.0, -42.5), 0.0],
 		["airlock_close.png", Vector3(0, 1.0, -56.0), 0.0]
 	]

@@ -84,8 +84,15 @@ func _ready() -> void:
 	check(not control.available and not (wing.object(&"airlock_inner") as ElectronicDoor).powered, "door control circuit removes airlock power")
 	door_breaker.interact(player)
 	check(control.available and (wing.object(&"airlock_inner") as ElectronicDoor).powered, "restoring door circuit recovers airlock progression")
+	GameSettings.set_value("interaction_toggle", false)
+	player.focused = control
+	check(player._focused_prompt().begins_with("[HOLD E]"), "timed airlock action displays a hold prompt")
+	player.focused = null
+	var selector_start := control.selector.rotation.z if control.selector else 0.0
 	control.interact(player)
 	check(chapter.airlock.phase == AirlockSystem.Phase.REQUESTED, "airlock cycle is requested through physical control")
+	await get_tree().create_timer(0.38).timeout
+	check(control.selector != null and absf(control.selector.rotation.z - selector_start) > 0.3, "airlock selector turns when the cycle starts")
 	check(not ray(Vector3(0, 1.2, -57.0), Vector3(0, 1.2, -59.0), 2).is_empty(), "outer door physically blocks passage before cycle")
 	for duration in [1.1, 1.9, 4.6, 2.1]: chapter.airlock._process(duration)
 	check(chapter.airlock.phase == AirlockSystem.Phase.OPEN and not (wing.object(&"airlock_outer") as ElectronicDoor).locked, "airlock seals, pressurizes, and opens in order")

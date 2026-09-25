@@ -349,6 +349,30 @@
       "mesh_objects": 10,
       "triangles_max": 4996,
       "collision": "Godot primitive"
+    },
+    {
+      "name": "generator_unit",
+      "category": "props",
+      "bounds_m": [
+        2.65,
+        3.05,
+        2.25
+      ],
+      "mesh_objects": 41,
+      "triangles_max": 5004,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "airlock_cycle_panel",
+      "category": "props",
+      "bounds_m": [
+        0.48,
+        0.19,
+        0.7
+      ],
+      "mesh_objects": 14,
+      "triangles_max": 4822,
+      "collision": "Godot primitive"
     }
   ]
 }
