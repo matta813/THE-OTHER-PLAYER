@@ -19,3 +19,5 @@ The director remains a reusable scoring/pacing component rather than a general a
 `SaveSystem` keeps schema version 4, adds optional metadata and four manual slot paths, and validates save data before applying it. The prior quick-save and checkpoint paths remain compatible. The exporter uses the Linux preset and `tools/export_release.sh`; no build output belongs in source control.
 
 `FirstPersonController` owns hold/toggle timing and emits interaction progress to the scene HUD. `Interactable.required_hold_duration` leaves direct interaction and save APIs unchanged; timed world actions opt in. `FacilityUITheme` supplies shared menu styling and `GameSettings` persists accessibility choices. The editor-independent asset validator and local CI scripts gate imports, tests and export.
+
+The Security bench light and CCTV standby/feed surface follow the `security` circuit. `ChapterOneController` applies circuit changes through `ChapterWingBuilder.set_zone_power` and `SecurityCameraConsole.set_powered`; the latter keeps the camera feed disabled when power is absent. The airlock control moves its imported selector when the cycle begins.

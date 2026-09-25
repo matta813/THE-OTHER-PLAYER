@@ -12,6 +12,7 @@ var luminaire := preload("res://assets/materials/luminaire_diffuser.tres")
 var enamel := preload("res://assets/materials/machine_enamel.tres")
 var objects: Dictionary = {}
 var lights: Dictionary = {}
+var task_lights: Dictionary = {}
 var audio_zones: Dictionary = {}
 var power_readout: Label3D
 var airlock_audio: AudioStreamPlayer3D
@@ -28,6 +29,7 @@ func _ready() -> void:
 func object(id: StringName) -> Node: return objects.get(id)
 
 func set_zone_power(id: String, enabled: bool) -> void:
+	if id == "security" and task_lights.has(id): (task_lights[id] as Light3D).visible = enabled
 	var player := audio_zones.get(id) as AudioStreamPlayer3D
 	if player == null or DisplayServer.get_name() == "headless": return
 	if enabled:
@@ -189,6 +191,7 @@ func _build_lighting() -> void:
 		task_light.spot_angle = 45.0
 		task_light.shadow_enabled = false
 		add_child(task_light)
+		task_lights[station.id] = task_light
 	for zone in [
 		{"id": "storage", "position": Vector3(-4.4, 2.8, -18), "color": Color(0.42, 0.52, 0.55), "energy": 0.9},
 		{"id": "security", "position": Vector3(4.3, 2.8, -23), "color": Color(0.4, 0.65, 0.55), "energy": 0.85},
