@@ -1,0 +1,354 @@
+{
+  "blender_version": "5.2.2 LTS",
+  "unit": "metre",
+  "assets": [
+    {
+      "name": "wall_section",
+      "category": "environment",
+      "bounds_m": [
+        2.4,
+        0.18,
+        3.2
+      ],
+      "mesh_objects": 9,
+      "triangles_max": 524,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "reinforced_wall",
+      "category": "environment",
+      "bounds_m": [
+        2.4,
+        0.3,
+        3.2
+      ],
+      "mesh_objects": 10,
+      "triangles_max": 728,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "wall_corner",
+      "category": "environment",
+      "bounds_m": [
+        0.32,
+        0.32,
+        3.2
+      ],
+      "mesh_objects": 5,
+      "triangles_max": 540,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "floor_section",
+      "category": "environment",
+      "bounds_m": [
+        2.0,
+        2.0,
+        0.12
+      ],
+      "mesh_objects": 5,
+      "triangles_max": 156,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "ceiling_section",
+      "category": "environment",
+      "bounds_m": [
+        2.0,
+        2.0,
+        0.12
+      ],
+      "mesh_objects": 3,
+      "triangles_max": 324,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "structural_beam",
+      "category": "environment",
+      "bounds_m": [
+        0.22,
+        0.24,
+        2.4
+      ],
+      "mesh_objects": 3,
+      "triangles_max": 324,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "door_frame",
+      "category": "environment",
+      "bounds_m": [
+        2.84,
+        0.4,
+        3.06
+      ],
+      "mesh_objects": 9,
+      "triangles_max": 3762,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "industrial_door",
+      "category": "environment",
+      "bounds_m": [
+        2.6,
+        0.22,
+        2.7
+      ],
+      "mesh_objects": 15,
+      "triangles_max": 3078,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "cable_tray",
+      "category": "environment",
+      "bounds_m": [
+        0.4,
+        2.4,
+        0.13
+      ],
+      "mesh_objects": 9,
+      "triangles_max": 972,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "cable_bundle",
+      "category": "environment",
+      "bounds_m": [
+        0.32,
+        2.3,
+        0.18
+      ],
+      "mesh_objects": 7,
+      "triangles_max": 404,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "ventilation_duct",
+      "category": "environment",
+      "bounds_m": [
+        0.7,
+        2.4,
+        0.5
+      ],
+      "mesh_objects": 4,
+      "triangles_max": 432,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "ventilation_grille",
+      "category": "environment",
+      "bounds_m": [
+        0.9,
+        0.08,
+        0.55
+      ],
+      "mesh_objects": 10,
+      "triangles_max": 1080,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "pipe_straight",
+      "category": "environment",
+      "bounds_m": [
+        0.14,
+        2.4,
+        0.14
+      ],
+      "mesh_objects": 3,
+      "triangles_max": 100,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "pipe_elbow",
+      "category": "environment",
+      "bounds_m": [
+        0.9,
+        0.9,
+        0.14
+      ],
+      "mesh_objects": 3,
+      "triangles_max": 92,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "pipe_junction",
+      "category": "environment",
+      "bounds_m": [
+        0.9,
+        0.9,
+        0.14
+      ],
+      "mesh_objects": 3,
+      "triangles_max": 92,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "electrical_cabinet",
+      "category": "props",
+      "bounds_m": [
+        1.2,
+        0.65,
+        2.1
+      ],
+      "mesh_objects": 14,
+      "triangles_max": 2864,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "breaker_panel",
+      "category": "props",
+      "bounds_m": [
+        1.3,
+        0.3,
+        0.85
+      ],
+      "mesh_objects": 15,
+      "triangles_max": 8494,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "equipment_rack",
+      "category": "props",
+      "bounds_m": [
+        0.9,
+        0.8,
+        2.0
+      ],
+      "mesh_objects": 19,
+      "triangles_max": 1172,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "terminal_housing",
+      "category": "props",
+      "bounds_m": [
+        0.74,
+        0.48,
+        1.45
+      ],
+      "mesh_objects": 16,
+      "triangles_max": 2588,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "security_camera_housing",
+      "category": "props",
+      "bounds_m": [
+        0.42,
+        0.65,
+        0.28
+      ],
+      "mesh_objects": 4,
+      "triangles_max": 360,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "industrial_light",
+      "category": "environment",
+      "bounds_m": [
+        1.5,
+        0.42,
+        0.17
+      ],
+      "mesh_objects": 4,
+      "triangles_max": 432,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "emergency_light",
+      "category": "environment",
+      "bounds_m": [
+        0.36,
+        0.18,
+        0.28
+      ],
+      "mesh_objects": 3,
+      "triangles_max": 324,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "wall_panel",
+      "category": "environment",
+      "bounds_m": [
+        1.2,
+        0.14,
+        1.6
+      ],
+      "mesh_objects": 6,
+      "triangles_max": 296,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "warning_sign_frame",
+      "category": "environment",
+      "bounds_m": [
+        0.72,
+        0.08,
+        0.3
+      ],
+      "mesh_objects": 3,
+      "triangles_max": 2376,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "maintenance_hatch",
+      "category": "environment",
+      "bounds_m": [
+        0.9,
+        0.12,
+        0.72
+      ],
+      "mesh_objects": 7,
+      "triangles_max": 404,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "security_console",
+      "category": "props",
+      "bounds_m": [
+        1.18,
+        0.58,
+        0.86
+      ],
+      "mesh_objects": 12,
+      "triangles_max": 4364,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "transfer_hatch",
+      "category": "props",
+      "bounds_m": [
+        1.2,
+        0.58,
+        0.84
+      ],
+      "mesh_objects": 11,
+      "triangles_max": 4284,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "airlock_door",
+      "category": "props",
+      "bounds_m": [
+        2.6,
+        0.28,
+        2.7
+      ],
+      "mesh_objects": 14,
+      "triangles_max": 5132,
+      "collision": "Godot primitive"
+    },
+    {
+      "name": "generator_control_unit",
+      "category": "props",
+      "bounds_m": [
+        0.95,
+        0.56,
+        1.35
+      ],
+      "mesh_objects": 10,
+      "triangles_max": 4996,
+      "collision": "Godot primitive"
+    }
+  ]
+}
