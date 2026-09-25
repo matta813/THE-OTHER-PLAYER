@@ -11,4 +11,5 @@ Saved/
 *.suo
 *.xcodeproj
 .godot/
+build/
 *.log

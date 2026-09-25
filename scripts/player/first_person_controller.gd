@@ -15,6 +15,8 @@ var footstep_player: AudioStreamPlayer3D
 var footstep_distance := 0.0
 var previous_step_position := Vector3.ZERO
 var step_streams: Dictionary = {}
+var sprint_active := false
+var crouch_active := false
 func _ready() -> void:
 	floor_max_angle = deg_to_rad(max_slope_angle); ray.target_position = Vector3(0, 0, -interaction_distance); Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	carry_mesh = MeshInstance3D.new(); carry_mesh.name = "CarriedItem"; camera.add_child(carry_mesh)
@@ -22,7 +24,7 @@ func _ready() -> void:
 	var shape := BoxMesh.new(); shape.size = Vector3(0.18, 0.06, 0.3); carry_mesh.mesh = shape
 	var material := StandardMaterial3D.new(); material.albedo_color = Color(0.36, 0.39, 0.35); material.metallic = 0.55; material.roughness = 0.48; carry_mesh.material_override = material
 	carry_mesh.visible = false
-	footstep_player = AudioStreamPlayer3D.new(); footstep_player.name = "Footsteps"; footstep_player.position = Vector3(0, -0.75, 0); footstep_player.max_distance = 8.0; footstep_player.volume_db = -16.0; add_child(footstep_player)
+	footstep_player = AudioStreamPlayer3D.new(); footstep_player.name = "Footsteps"; footstep_player.position = Vector3(0, -0.75, 0); footstep_player.max_distance = 8.0; footstep_player.volume_db = -16.0; footstep_player.bus = "SFX"; add_child(footstep_player)
 	for surface in [&"concrete", &"metal", &"grating"]: step_streams[surface] = FacilitySoundLibrary.step(surface)
 	previous_step_position = global_position
 func has_carried_item() -> bool: return carried_item_id != &""
@@ -37,22 +39,25 @@ func set_carried_item(item_id: StringName) -> void:
 	carried_item_id = item_id
 	if carry_mesh: carry_mesh.visible = has_carried_item()
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("sprint") and GameSettings.get_value("sprint_toggle"): sprint_active = not sprint_active
+	if event.is_action_pressed("crouch") and GameSettings.get_value("crouch_toggle"): crouch_active = not crouch_active
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * mouse_sensitivity); pitch = clampf(pitch - event.relative.y * mouse_sensitivity, -1.42, 1.42); head.rotation.x = pitch
-	if event.is_action_pressed("ui_cancel"): Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED
+		var sensitivity := float(GameSettings.get_value("mouse_sensitivity"))
+		rotate_y(-event.relative.x * sensitivity); pitch = clampf(pitch + event.relative.y * sensitivity * (1.0 if GameSettings.get_value("invert_y") else -1.0), -1.42, 1.42); head.rotation.x = pitch
 	if event.is_action_pressed("interact") and focused: focused.interact(self)
 func _physics_process(delta: float) -> void:
 	if not is_on_floor(): velocity.y -= gravity * delta
 	else: velocity.y = -0.5
-	var crouching := Input.is_action_pressed("crouch"); var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back"); var direction := (transform.basis * Vector3(input.x, 0, input.y)).normalized()
-	var target_speed := crouch_speed if crouching else (sprint_speed if Input.is_action_pressed("sprint") and input.y < 0.0 else walk_speed); var rate := ground_acceleration if direction else ground_deceleration
+	var crouching := crouch_active if GameSettings.get_value("crouch_toggle") else Input.is_action_pressed("crouch"); var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back"); var direction := (transform.basis * Vector3(input.x, 0, input.y)).normalized()
+	var sprinting := sprint_active if GameSettings.get_value("sprint_toggle") else Input.is_action_pressed("sprint")
+	var target_speed := crouch_speed if crouching else (sprint_speed if sprinting and input.y < 0.0 else walk_speed); var rate := ground_acceleration if direction else ground_deceleration
 	velocity.x = move_toward(velocity.x, direction.x * target_speed, rate * delta); velocity.z = move_toward(velocity.z, direction.z * target_speed, rate * delta)
 	var target_height := crouching_eye_offset if crouching else standing_eye_offset; head.position.y = move_toward(head.position.y, target_height, crouch_transition_speed * delta)
 	var capsule := collider.shape as CapsuleShape3D
 	if capsule: capsule.height = move_toward(capsule.height, 1.25 if crouching else 1.75, crouch_transition_speed * delta)
 	collider.position.y = move_toward(collider.position.y, -0.25 if crouching else 0.0, crouch_transition_speed * delta)
 	if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 0.4:
-		bob_time += delta * step_bob_frequency * (target_speed / walk_speed); camera.position.y = sin(bob_time) * step_bob_amount
+		bob_time += delta * step_bob_frequency * (target_speed / walk_speed); camera.position.y = sin(bob_time) * step_bob_amount * (0.0 if GameSettings.get_value("reduce_motion") else float(GameSettings.get_value("camera_bob")))
 	else: camera.position.y = move_toward(camera.position.y, 0.0, delta * 0.08)
 	move_and_slide(); _update_footsteps(crouching); _update_focus()
 func _update_footsteps(crouching: bool) -> void:
@@ -62,7 +67,7 @@ func _update_footsteps(crouching: bool) -> void:
 		footstep_distance = 0.0
 		return
 	footstep_distance += horizontal
-	var stride := 0.95 if crouching else (1.55 if Input.is_action_pressed("sprint") else 1.32)
+	var stride := 0.95 if crouching else (1.55 if (sprint_active if GameSettings.get_value("sprint_toggle") else Input.is_action_pressed("sprint")) else 1.32)
 	if footstep_distance < stride: return
 	footstep_distance = fmod(footstep_distance, stride)
 	var surface: StringName = &"concrete"

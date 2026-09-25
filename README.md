@@ -1,15 +1,37 @@
 # THE OTHER PLAYER
 
-An offline Godot 4 first-person psychological-horror project. Chapter 1, **Connection**, now extends the original first-contact slice through a small facility wing and a functional exit-airlock sequence. The unseen partner observes behaviour, helps remotely, and can act a little too early.
+An offline, first-person psychological-horror game built with Godot 4. Chapter 1, **Connection**, is playable from a restrained facility main menu. The unseen partner observes behaviour, helps remotely, and can act a little too early. Version **0.1.0 pre-alpha** is defined in `scripts/core/release_info.gd`. Chapter 2 has not begun.
 
-## Current playable flow
+## Play
 
-Wake in Arrival, use the link terminal, cross the remotely unlocked door and restore local power. The connected wing contains Storage, a Security Office, Transfer Room, Maintenance Tunnel, Generator Room, Observation Corridor, Communications and an Exit Airlock. Compare two CCTV feeds, report the active relay, carry a 35A fuse to the hatch, receive a card back, reroute a 10-unit power budget, start the generator with remote contactor help, test the link, and cycle the airlock. The ending fades without revealing the partner's nature. See [Chapter 1](docs/CHAPTER_01.md) for progression and current limits.
+Use Godot 4.7.2 on Linux (Forward+):
 
-```bash
+```sh
 ./tools/run.sh
 ```
 
-Controls: WASD move, mouse look, Shift sprint, Ctrl crouch, E interact, Esc release/capture mouse, F3 developer overlay, F5 save, F9 load. With the debug overlay open in a debug build: F6 teleports to the current task, F7 sets a cooperative trust/low-suspicion state, F8 advances pending remote timers.
+From the menu choose New Game or Continue. Chapter 1 moves through Arrival, Security, Transfer, Generator, Communications and Exit Airlock. See `docs/CHAPTER_01.md` for the route. Esc opens Pause; from there you can save to or load from four manual slots, adjust settings, return to menu or quit. Autosaves are written at chapter checkpoints. Quick save and quick load remain on F5/F9. Existing version 1–4 `user://save.json` and `user://checkpoint.json` files remain loadable.
 
-Validation: `./tools/check.sh` and `./tools/test.sh`. The F3 overlay exposes habits, trust, predictions, chapter state, power, reciprocity, hatch and airlock state; none appear in normal play. Current ambience, relay/motor cues and surface footsteps are procedurally generated offline. Authored facility audio, calibrated art assets, and a measured 30–45 minute first-time playtest are still needed.
+Controls: WASD movement, mouse look, Shift sprint, Ctrl crouch, E interact, Esc pause, F5 quick save, F9 quick load. Controls can be rebound in Settings. In debug builds only, F3 opens telemetry; with it open F6 teleports to the current task, F7 sets a cooperative state, and F8 advances remote timers.
+
+## Build and validation
+
+```sh
+./tools/check.sh
+./tools/test.sh
+./tools/export_release.sh
+```
+
+The export script validates the project, runs the tests, and creates `build/linux/the-other-player.x86_64`. Install the matching Godot 4.7.2 export templates first. Run the executable from its build directory; `THIRD_PARTY.md` is copied alongside it. Build output and Godot import caches are ignored by Git. See `docs/BUILDING.md` for details.
+
+## Repository
+
+- `scenes/`: main menu and Chapter 1 scene.
+- `scripts/core/`: runtime registry, scene flow, version and persistent settings.
+- `scripts/save/`: versioned save data and slot metadata.
+- `scripts/world/`, `scripts/facility/`, `scripts/other_player/`: chapter spaces, interactions and adaptive systems.
+- `scripts/ui/`, `scripts/audio/`: menus, captions, terminal and sound.
+- `assets/`: procedural materials/shader and future authored asset categories; see `docs/ASSET_PIPELINE.md`.
+- `resources/`: authored dialogue. `tests/` and `tools/`: checks, scene tests and build scripts.
+
+This is a pre-alpha foundation. Menu, settings and slot flows exist, but authored audio/art, full accessibility, calibrated lighting/materials, measured playtime and a complete human playtest are still outstanding.

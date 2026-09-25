@@ -31,6 +31,7 @@ var restoring := false
 var end_layer: CanvasLayer
 var end_fade: ColorRect
 var end_title: Label
+var end_menu: Button
 
 func _ready() -> void:
 	GameRuntime.register(&"chapter_one", self)
@@ -61,7 +62,7 @@ func _ready() -> void:
 	(wing.object(&"airlock_control") as AirlockControl).cycle_requested.connect(_on_airlock_requested)
 	(wing.object(&"airlock_control") as AirlockControl).available = false
 	GameRuntime.other_player.action_due.connect(_on_remote_action)
-	stage_started_at = Time.get_ticks_msec() / 1000.0
+	stage_started_at = GameRuntime.playtime
 	_build_end_overlay()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -83,6 +84,7 @@ func _build_end_overlay() -> void:
 	end_layer = CanvasLayer.new(); end_layer.name = "ChapterEnd"; end_layer.layer = 10; add_child(end_layer)
 	end_fade = ColorRect.new(); end_fade.name = "Fade"; end_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); end_fade.color = Color(0.005, 0.009, 0.01, 0.0); end_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE; end_layer.add_child(end_fade)
 	end_title = Label.new(); end_title.name = "Title"; end_title.set_anchors_and_offsets_preset(Control.PRESET_CENTER); end_title.text = "CONNECTION ESTABLISHED"; end_title.add_theme_color_override("font_color", Color(0.61, 0.72, 0.67)); end_title.add_theme_font_size_override("font_size", 22); end_title.visible = false; end_layer.add_child(end_title)
+	end_menu = Button.new(); end_menu.text = "RETURN TO MAIN MENU"; end_menu.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM); end_menu.position = Vector2(-115, -120); end_menu.custom_minimum_size = Vector2(230, 42); end_menu.visible = false; end_menu.pressed.connect(GameFlow.main_menu); end_layer.add_child(end_menu)
 
 func _exit_tree() -> void: GameRuntime.unregister(&"chapter_one", self)
 
@@ -94,12 +96,12 @@ func _process(_delta: float) -> void:
 		_send(&"security_request")
 	if stage == Stage.WAITING: return
 	_track_rooms()
-	if stage == Stage.TRANSFER and hatch_pending and Time.get_ticks_msec() / 1000.0 - hatch_pending_since > 28.0:
+	if stage == Stage.TRANSFER and hatch_pending and GameRuntime.playtime - hatch_pending_since > 28.0:
 		var hatch := wing.object(&"transfer_hatch") as TransferHatch
 		if hatch.hatch_state == TransferHatch.HatchState.TRANSIT and not card_returned:
 			GameRuntime.other_player.cancel_action(&"chapter_fuse_return", &"transfer_hatch")
 			_on_fuse_return()
-	if stage == Stage.GENERATOR and generator_pending and Time.get_ticks_msec() / 1000.0 - generator_pending_since > 30.0: _generator_online()
+	if stage == Stage.GENERATOR and generator_pending and GameRuntime.playtime - generator_pending_since > 30.0: _generator_online()
 	if stage == Stage.AIRLOCK:
 		if player.global_position.z < -53.0 and not visited.has("airlock_entry"):
 			visited["airlock_entry"] = true
@@ -157,7 +159,7 @@ func _on_action_point(action_id: StringName) -> void:
 			if player.carried_item_id != &"access_card": _send(&"generator_card", false); return
 			if not grid.is_powered(&"generator_starter"): _send(&"power_hint", false); return
 			generator_pending = true
-			generator_pending_since = Time.get_ticks_msec() / 1000.0
+			generator_pending_since = GameRuntime.playtime
 			GameRuntime.behaviour.record(&"generator_started", player.global_position, &"generator_starter", &"local")
 			GameRuntime.other_player.schedule(&"chapter_generator_sync", &"generator_starter", 1.0, {"task": "Holding remote contactor", "delay_bias": 2.0})
 			_send(&"generator_wait")
@@ -172,7 +174,7 @@ func _on_action_point(action_id: StringName) -> void:
 func _on_hatch_sealed(item_id: StringName) -> void:
 	if stage != Stage.TRANSFER or item_id != &"fuse_35a": return
 	hatch_pending = true
-	hatch_pending_since = Time.get_ticks_msec() / 1000.0
+	hatch_pending_since = GameRuntime.playtime
 	GameRuntime.other_player.schedule(&"chapter_fuse_receive", &"transfer_hatch", 0.9, {"task": "Receiving fuse", "delay_bias": 1.2})
 
 func _on_remote_received(item_id: StringName) -> void:
@@ -292,10 +294,11 @@ func _show_end_transition(immediate: bool) -> void:
 	if immediate:
 		end_fade.color.a = 0.96
 		end_title.visible = true
+		end_menu.visible = true
 		return
 	var fade := create_tween()
 	fade.tween_property(end_fade, "color:a", 0.96, 2.2)
-	fade.tween_callback(func() -> void: end_title.visible = true)
+	fade.tween_callback(func() -> void: end_title.visible = true; end_menu.visible = true)
 
 func _send(key: StringName, once := true) -> void:
 	if once and spoken.has(String(key)): return
@@ -309,10 +312,10 @@ func _send(key: StringName, once := true) -> void:
 func _set_stage(next: int) -> void:
 	if stage == next: return
 	stage = next
-	stage_started_at = Time.get_ticks_msec() / 1000.0
+	stage_started_at = GameRuntime.playtime
 	chapter_stage_changed.emit(stage)
 
-func _stage_elapsed() -> float: return Time.get_ticks_msec() / 1000.0 - stage_started_at
+func _stage_elapsed() -> float: return GameRuntime.playtime - stage_started_at
 
 func _checkpoint(index: int) -> void:
 	if index <= checkpoint_index: return
@@ -321,13 +324,13 @@ func _checkpoint(index: int) -> void:
 	if not SaveSystem.save_checkpoint(player): checkpoint_index = previous
 
 func state_dict() -> Dictionary:
-	var now := Time.get_ticks_msec() / 1000.0
+	var now := GameRuntime.playtime
 	return {"stage": stage, "stage_elapsed": _stage_elapsed(), "checkpoint_index": checkpoint_index, "spoken": spoken.duplicate(true), "visited": visited.duplicate(true), "viewed_storage": viewed_storage, "viewed_generator": viewed_generator, "card_returned": card_returned, "generator_online": generator_online, "generator_pending": generator_pending, "generator_pending_elapsed": maxf(now - generator_pending_since, 0.0) if generator_pending else 0.0, "hatch_pending": hatch_pending, "hatch_pending_elapsed": maxf(now - hatch_pending_since, 0.0) if hatch_pending else 0.0, "chapter_end_visible": chapter_end_visible, "grid": grid.to_dict(), "reciprocity": reciprocity.to_dict(), "airlock": airlock.state_dict()}
 
 func load_state(data: Dictionary) -> void:
 	restoring = true
 	stage = clampi(int(data.get("stage", Stage.WAITING)), Stage.WAITING, Stage.COMPLETE)
-	stage_started_at = Time.get_ticks_msec() / 1000.0 - float(data.get("stage_elapsed", 0.0))
+	stage_started_at = GameRuntime.playtime - float(data.get("stage_elapsed", 0.0))
 	checkpoint_index = int(data.get("checkpoint_index", 0))
 	spoken = data.get("spoken", {}).duplicate(true)
 	visited = data.get("visited", {}).duplicate(true)
@@ -341,13 +344,13 @@ func load_state(data: Dictionary) -> void:
 		elif not generator_online: generator_hum.stop()
 	generator_pending = bool(data.get("generator_pending", false))
 	hatch_pending = bool(data.get("hatch_pending", false))
-	var now := Time.get_ticks_msec() / 1000.0
+	var now := GameRuntime.playtime
 	generator_pending_since = now - float(data.get("generator_pending_elapsed", 0.0)) if generator_pending else 0.0
 	hatch_pending_since = now - float(data.get("hatch_pending_elapsed", 0.0)) if hatch_pending else 0.0
 	chapter_end_visible = bool(data.get("chapter_end_visible", false))
 	if chapter_end_visible: _show_end_transition(true)
 	else:
-		end_fade.color.a = 0.0; end_title.visible = false
+		end_fade.color.a = 0.0; end_title.visible = false; end_menu.visible = false
 		player.set_physics_process(true); player.set_process_unhandled_input(true)
 	grid.load_dict(data.get("grid", {}))
 	for id in [&"ventilation_breaker", &"starter_breaker", &"security_breaker", &"door_breaker"]: (wing.object(id) as CircuitBreaker).load_state({})

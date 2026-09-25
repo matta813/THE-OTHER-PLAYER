@@ -133,7 +133,7 @@ func _build_lighting() -> void:
 		{"id": "airlock", "position": Vector3(0, 2.8, -55), "color": Color(0.64, 0.74, 0.8), "energy": 1.5}
 	]:
 		var light := OmniLight3D.new(); light.name = "%sLight" % zone.id; light.position = zone.position; light.light_color = zone.color; light.light_energy = zone.energy; light.omni_range = 6.5; light.shadow_enabled = zone.id in ["generator", "airlock"]; add_child(light); lights[zone.id] = light
-		var ambience := AudioStreamPlayer3D.new(); ambience.name = "%sHum" % zone.id; ambience.position = zone.position - Vector3(0, 1.5, 0); ambience.max_distance = 12.0; ambience.volume_db = -32.0 if zone.id in ["observation", "airlock"] else -27.0; ambience.stream = FacilitySoundLibrary.hum(48.0 if zone.id == "generator" else (60.0 if zone.id == "security" else 50.0)); add_child(ambience); audio_zones[zone.id] = ambience
+		var ambience := AudioStreamPlayer3D.new(); ambience.name = "%sHum" % zone.id; ambience.position = zone.position - Vector3(0, 1.5, 0); ambience.max_distance = 12.0; ambience.volume_db = -32.0 if zone.id in ["observation", "airlock"] else -27.0; ambience.stream = FacilitySoundLibrary.hum(48.0 if zone.id == "generator" else (60.0 if zone.id == "security" else 50.0)); ambience.bus = "Ambience"; add_child(ambience); audio_zones[zone.id] = ambience
 		if zone.id != "generator" and DisplayServer.get_name() != "headless": ambience.play()
 
 func _build_room_props() -> void:

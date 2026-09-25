@@ -22,9 +22,13 @@ var threshold_logged := false
 var request_last_position := Vector3.ZERO
 var stationary_seconds := 0.0
 var wait_logged := false
+var subtitles: SubtitlePresenter
 
 func _ready() -> void:
 	player.focus_changed.connect(func(value: String) -> void: prompt.text = value)
+	GameSettings.changed.connect(_apply_settings)
+	_apply_settings()
+	subtitles = SubtitlePresenter.new(); add_child(subtitles)
 	$Terminal.terminal_used.connect(_terminal)
 	$PowerSwitch.power_changed.connect(_power)
 	GameRuntime.behaviour.event_recorded.connect(_event)
@@ -36,9 +40,33 @@ func _ready() -> void:
 	$Terminal.history.clear()
 	$Terminal.append_line("FACILITY LINK // NODE 02")
 	$Terminal.append_line("STATUS: SEARCHING FOR PEER...")
+	if not GameFlow.pending_save.is_empty():
+		if SaveSystem.load_from(GameFlow.pending_save, player): _restore_visual_state()
+		else: _status("SAVE COULD NOT BE LOADED")
+		GameFlow.pending_save = ""
+
+func _apply_settings() -> void:
+	GameSettings.apply_environment($Environment.environment)
+	player.camera.fov = float(GameSettings.get_value("fov"))
+	prompt.add_theme_color_override("font_color", Color(1, 1, 0.86) if GameSettings.get_value("high_contrast_prompt") else Color(0.76, 0.82, 0.78, 0.9))
+	for light in find_children("*", "Light3D", true, false):
+		if not light.has_meta("authored_shadow"): light.set_meta("authored_shadow", light.shadow_enabled)
+		light.shadow_enabled = bool(light.get_meta("authored_shadow")) and bool(GameSettings.get_value("shadows"))
+	$VentilationHum.bus = "Ambience"
+	$DistantMachinery.bus = "Ambience"
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		var pause_layer := CanvasLayer.new(); pause_layer.name = "PauseLayer"; pause_layer.layer = 20; pause_layer.process_mode = Node.PROCESS_MODE_ALWAYS; add_child(pause_layer)
+		var pause_ui := MenuUI.new(); pause_ui.game_root = self; pause_layer.add_child(pause_ui)
+		pause_ui.tree_exited.connect(func() -> void: pause_layer.queue_free())
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		get_tree().paused = true
 
 func _process(delta: float) -> void:
-	var clock := Time.get_ticks_msec() / 1000.0
+	GameRuntime.playtime += delta
+	var clock := GameRuntime.playtime
 	var world_time := Time.get_unix_time_from_system()
 	GameRuntime.predictions.expire(world_time)
 	if terminal_visits > 0 and player.global_position.distance_to($Terminal.global_position) > 3.0:
@@ -66,11 +94,12 @@ func _process(delta: float) -> void:
 			threshold_logged = true
 			GameRuntime.behaviour.record(&"hesitated_at_threshold", player.global_position, &"room_b")
 	else: threshold_since = -1.0
-	if Input.is_action_just_pressed("toggle_debug"): $UI/DebugPanel.visible = not $UI/DebugPanel.visible
+	if OS.is_debug_build() and Input.is_action_just_pressed("toggle_debug"): $UI/DebugPanel.visible = not $UI/DebugPanel.visible
 	if Input.is_action_just_pressed("quick_save"): _status("STATE RECORDED" if SaveSystem.save_game(player) else "SAVE FAILED")
 	if Input.is_action_just_pressed("quick_load"):
-		_status("STATE RESTORED" if SaveSystem.load_game(player) else "NO VALID SAVE")
-		_restore_visual_state()
+		var restored := SaveSystem.load_game(player)
+		_status("STATE RESTORED" if restored else "NO VALID SAVE")
+		if restored: _restore_visual_state()
 	if $UI/DebugPanel.visible: _update_debug(world_time)
 
 func _terminal() -> void:
@@ -142,7 +171,7 @@ func _choose_corridor_action(world_time: float) -> void:
 func _begin_power_request() -> void:
 	if GameRuntime.story_stage != 2: return
 	GameRuntime.story_stage = 3
-	$PowerSwitch.set_meta("requested_at", Time.get_ticks_msec() / 1000.0)
+	$PowerSwitch.set_meta("requested_at", GameRuntime.playtime)
 	request_last_position = player.global_position
 	stationary_seconds = 0.0
 	$Terminal.append_line("02: need power over here")
@@ -157,7 +186,7 @@ func _power(on: bool) -> void:
 	$FacilityDetails.set_east_power(true)
 	$MachineryIndicator.visible = true
 	GameRuntime.story_stage = 4
-	GameRuntime.other_player.memory.last_player_response = Time.get_ticks_msec() / 1000.0 - float($PowerSwitch.get_meta("requested_at"))
+	GameRuntime.other_player.memory.last_player_response = GameRuntime.playtime - float($PowerSwitch.get_meta("requested_at"))
 	var world_time := Time.get_unix_time_from_system()
 	var choice := GameRuntime.director.choose(&"power_restored", SliceEventOptions.power_restored(), GameRuntime.adaptive_state(), world_time)
 	awaiting_ack = true
@@ -183,7 +212,10 @@ func _event(event: BehaviourEvent) -> void:
 	GameRuntime.predictions.observe(event.event_type, event.target_id, Time.get_unix_time_from_system())
 
 func _show_terminal(text: String, newest_line := "") -> void: typewriter.display(text, newest_line)
-func _status(text: String) -> void: $UI/Status.text = text; $UI/StatusTimer.start()
+func _status(text: String) -> void:
+	$UI/Status.text = text; $UI/StatusTimer.start()
+	if text.begins_with("LINK 02 // ") and subtitles:
+		subtitles.show_caption("Link 02", text.trim_prefix("LINK 02 // "), 4.0, 1, true)
 func _on_status_timer_timeout() -> void: $UI/Status.text = ""
 
 func _restore_visual_state() -> void:

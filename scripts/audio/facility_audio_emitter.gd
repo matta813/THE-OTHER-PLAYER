@@ -7,6 +7,7 @@ extends AudioStreamPlayer3D
 @export_range(-60.0, 6.0) var interaction_volume_db := -6.0
 
 func _ready() -> void:
+	bus = "SFX"
 	if interaction_stream == null: interaction_stream = FacilitySoundLibrary.relay()
 	if unavailable_stream == null: unavailable_stream = FacilitySoundLibrary.relay()
 	if remote_stream == null: remote_stream = FacilitySoundLibrary.motor()
