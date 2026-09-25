@@ -22,7 +22,7 @@ Controls: WASD movement, mouse look, Shift sprint, Ctrl crouch, E interact, Esc 
 ./tools/ci_build.sh
 ```
 
-The local CI scripts validate the generated art and project, run six test scenes, and create `build/linux/the-other-player.x86_64`. Install the matching Godot 4.7.2 export templates first. Run the executable from its build directory; `THIRD_PARTY.md` is copied alongside it. Build output and Godot import caches are ignored by Git. See `docs/BUILDING.md` for details.
+The local CI scripts validate the generated art and project, run seven test scenes, and create `build/linux/the-other-player.x86_64`. Install the matching Godot 4.7.2 export templates first. Run the executable from its build directory; `THIRD_PARTY.md` is copied alongside it. Build output and Godot import caches are ignored by Git. See `docs/BUILDING.md` for details.
 
 ## Repository
 

@@ -9,6 +9,7 @@ godot --headless --path . res://tests/scene_geometry_test.tscn
 godot --headless --path . res://tests/adaptive_scene_test.tscn
 godot --headless --path . res://tests/chapter_scene_test.tscn
 godot --headless --path . res://tests/chapter_adaptive_test.tscn
+godot --headless --path . res://tests/loading_flow_test.tscn
 smoke_data_dir="$(mktemp -d /tmp/top-smoke-data.XXXXXX)"
 smoke_config_dir="$(mktemp -d /tmp/top-smoke-config.XXXXXX)"
 smoke_cache_dir="$(mktemp -d /tmp/top-smoke-cache.XXXXXX)"

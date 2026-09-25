@@ -14,7 +14,7 @@ The director remains a reusable scoring/pacing component rather than a general a
 
 ## Production shell
 
-`main_menu.tscn` is the boot scene; `chapter_01.tscn` is the playable scene. `GameFlow` owns scene transitions and resets `GameRuntime` before starting a session. `GameSettings` stores preferences separately in `user://settings.json`, applies video/audio/input settings, and exposes scene environment settings. `MenuUI` is shared between the main menu and pause overlay. The pause overlay uses Always processing while the game tree pauses, including the remote action clock. `SubtitlePresenter` displays queued communication captions independently of the terminal. `ReleaseInfo.VERSION` is the canonical semantic version.
+`main_menu.tscn` is the boot scene; `chapter_01.tscn` is the playable scene. `GameFlow` owns scene transitions, resets `GameRuntime` before starting a session, and keeps a restrained loading layer visible while Chapter 1 loads on a resource thread. `GameSettings` stores preferences separately in `user://settings.json`, applies video/audio/input settings, and exposes scene environment settings. `MenuUI` is shared between the main menu and pause overlay. The pause overlay uses Always processing while the game tree pauses, including the remote action clock. `SubtitlePresenter` displays queued communication captions independently of the terminal. `ReleaseInfo.VERSION` is the canonical semantic version.
 
 `SaveSystem` keeps schema version 4, adds optional metadata and four manual slot paths, and validates save data before applying it. The prior quick-save and checkpoint paths remain compatible. The exporter uses the Linux preset and `tools/export_release.sh`; no build output belongs in source control.
 

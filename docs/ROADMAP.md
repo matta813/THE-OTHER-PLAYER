@@ -4,7 +4,7 @@
 
 The complete Chapter 1 flow and adaptive events run in automated scene tests. Phase 6 added a 29-part generated Blender kit, original GLB props, more constrained airlock architecture, integrated physical fixtures, color and lighting adjustments, moving door/hatch/breaker mechanisms, room-dependent procedural audio, a shared menu theme, interaction progress, accessibility toggles, a Linux CI workflow and local build parity. The Linux release exports and boots outside the editor.
 
-The visual pass is still uneven. Long wall runs, some collision-backed housings and monitor surfaces still read as simple geometry; the Security Office and Generator Room need stronger authored composition. The procedural sound is functional but lacks recorded machinery and room impulse responses. The terminal and loading presentation need a full production design pass. First-time human playtime and route-wide GPU stability have not been established, so the game's 30–45 minute target is unverified.
+The visual pass is still uneven. Long wall runs, some collision-backed housings and monitor surfaces still read as simple geometry; the Security Office and Generator Room need stronger authored composition. The procedural sound is functional but lacks recorded machinery and room impulse responses. The terminal and minimal connection loading presentation need a full production design pass. First-time human playtime and route-wide GPU stability have not been established, so the game's 30–45 minute target is unverified.
 
 ## Recommended next phase
 
